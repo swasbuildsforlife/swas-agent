@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime
+from textwrap import dedent
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -17,7 +18,7 @@ st.set_page_config(
     page_title="Swas Agent",
     page_icon="✦",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 load_dotenv()
@@ -32,64 +33,49 @@ client = genai.Client(api_key=api_key)
 
 
 # ============================================================
-# PREMIUM DARK APPLE UI
+# PREMIUM CSS
 # ============================================================
 
-st.markdown(
+st.html(
     """
     <style>
 
-    /* ========================================================
-       GLOBAL
-    ======================================================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-    @import url(
-        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
-    );
-
-    html,
-    body,
-    [class*="css"] {
-        font-family:
-            'Inter',
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
     }
 
     .stApp {
         background:
             radial-gradient(
-                circle at 50% -15%,
-                rgba(255,255,255,0.08),
-                transparent 32%
+                700px 420px at 50% -100px,
+                rgba(125,125,255,0.12),
+                transparent 70%
             ),
             radial-gradient(
-                circle at 10% 20%,
-                rgba(120,120,255,0.035),
-                transparent 28%
+                500px 350px at 0% 30%,
+                rgba(80,150,255,0.045),
+                transparent 70%
+            ),
+            radial-gradient(
+                500px 350px at 100% 55%,
+                rgba(180,80,255,0.035),
+                transparent 70%
             ),
             linear-gradient(
                 180deg,
-                #090a0c 0%,
-                #050608 55%,
+                #08090b 0%,
+                #050608 48%,
                 #020304 100%
             );
 
         color: #f5f5f7;
+        min-height: 100vh;
     }
-
-
-    /* ========================================================
-       HIDE STREAMLIT CHROME
-       ======================================================== */
 
     #MainMenu {
-        visibility: hidden;
-    }
-
-    footer {
         visibility: hidden;
     }
 
@@ -97,132 +83,252 @@ st.markdown(
         visibility: hidden;
     }
 
-
-    /* ========================================================
-       MAIN CONTAINER
-       ======================================================== */
+    footer {
+        visibility: hidden;
+    }
 
     .block-container {
-        max-width: 900px !important;
-
-        padding-top: 42px !important;
-        padding-bottom: 130px !important;
+        max-width: 1080px !important;
+        padding-top: 26px !important;
+        padding-bottom: 150px !important;
     }
 
 
     /* ========================================================
-       TITLE
+       TOP BAR
        ======================================================== */
 
-    .main-title {
-        text-align: center;
-
-        font-size: 38px;
-        font-weight: 700;
-
-        letter-spacing: -1.8px;
-
-        color: #f5f5f7;
-
-        margin-top: 10px;
-        margin-bottom: 7px;
-    }
-
-    .main-subtitle {
-        text-align: center;
-
-        font-size: 14px;
-
-        color: #86868b;
-
-        letter-spacing: 0.1px;
-
-        margin-bottom: 20px;
-    }
-
-
-    /* ========================================================
-       LOGO
-       ======================================================== */
-
-    .logo-wrap {
+    .topbar {
         display: flex;
-        justify-content: center;
+        align-items: center;
+        justify-content: space-between;
 
-        margin-bottom: 15px;
+        padding: 10px 4px 22px 4px;
+        margin-bottom: 20px;
+
+        border-bottom: 1px solid rgba(255,255,255,0.055);
     }
 
-    .logo {
-        width: 52px;
-        height: 52px;
+    .brand-mini {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .brand-mark {
+        width: 34px;
+        height: 34px;
 
         display: flex;
         align-items: center;
         justify-content: center;
 
-        border-radius: 16px;
+        border-radius: 11px;
 
         background:
             linear-gradient(
                 145deg,
-                #24262b,
-                #0b0c0f
+                #30323a,
+                #101115
             );
 
-        border: 1px solid rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.13);
 
         box-shadow:
-            0 18px 45px rgba(0,0,0,0.55),
-            inset 0 1px 0 rgba(255,255,255,0.08);
+            0 8px 25px rgba(0,0,0,0.45),
+            inset 0 1px 0 rgba(255,255,255,0.10);
 
-        color: #ffffff;
+        color: white;
+        font-size: 17px;
+        font-weight: 700;
+    }
 
-        font-size: 24px;
+    .brand-name {
+        font-size: 15px;
         font-weight: 600;
+        letter-spacing: -0.3px;
+        color: #f5f5f7;
     }
 
+    .brand-version {
+        color: #636369;
+        font-size: 10px;
+        margin-left: 5px;
+    }
 
-    /* ========================================================
-       STATUS
-       ======================================================== */
-
-    .status-wrap {
+    .connection {
         display: flex;
-        justify-content: center;
-
-        margin-bottom: 38px;
-    }
-
-    .status {
-        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 7px;
 
-        padding: 7px 13px;
+        padding: 6px 11px;
 
         border-radius: 999px;
 
-        background:
-            rgba(255,255,255,0.035);
+        background: rgba(52,199,89,0.055);
 
-        border:
-            1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(52,199,89,0.12);
 
-        color: #8e8e93;
+        color: #8f9690;
 
-        font-size: 12px;
+        font-size: 10px;
+        letter-spacing: 0.2px;
     }
 
-    .status-dot {
-        width: 7px;
-        height: 7px;
+    .connection-dot {
+        width: 6px;
+        height: 6px;
 
         border-radius: 50%;
 
         background: #34c759;
 
         box-shadow:
-            0 0 12px rgba(52,199,89,0.75);
+            0 0 12px rgba(52,199,89,0.8);
+    }
+
+
+    /* ========================================================
+       HERO
+       ======================================================== */
+
+    .hero {
+        text-align: center;
+        padding-top: 44px;
+        padding-bottom: 30px;
+    }
+
+    .hero-orb {
+        width: 76px;
+        height: 76px;
+
+        margin: 0 auto 25px auto;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 25px;
+
+        background:
+            radial-gradient(
+                circle at 30% 25%,
+                rgba(255,255,255,0.18),
+                transparent 32%
+            ),
+            linear-gradient(
+                145deg,
+                #282b33,
+                #0b0c0f
+            );
+
+        border: 1px solid rgba(255,255,255,0.14);
+
+        box-shadow:
+            0 25px 70px rgba(0,0,0,0.65),
+            0 0 70px rgba(120,120,255,0.055),
+            inset 0 1px 0 rgba(255,255,255,0.09);
+
+        font-size: 32px;
+        color: white;
+    }
+
+    .hero-title {
+        font-size: 48px;
+        line-height: 1.05;
+
+        font-weight: 700;
+        letter-spacing: -2.5px;
+
+        margin: 0;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #b9b9c0 100%
+            );
+
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+        margin-top: 13px;
+
+        color: #77777f;
+
+        font-size: 14px;
+        letter-spacing: 0.1px;
+    }
+
+
+    /* ========================================================
+       SECTION LABEL
+       ======================================================== */
+
+    .section-label {
+        text-align: center;
+
+        color: #56565d;
+
+        font-size: 10px;
+        font-weight: 600;
+
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+
+        margin: 12px 0 14px 0;
+    }
+
+
+    /* ========================================================
+       BUTTONS
+       ======================================================== */
+
+    .stButton > button {
+        width: 100%;
+        min-height: 78px;
+
+        border-radius: 17px;
+
+        border: 1px solid rgba(255,255,255,0.075);
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.055),
+                rgba(255,255,255,0.022)
+            );
+
+        color: #e9e9ed;
+
+        font-size: 12px;
+        font-weight: 500;
+
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.035),
+            0 15px 40px rgba(0,0,0,0.16);
+
+        transition: all 0.2s ease;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+
+        border-color: rgba(255,255,255,0.16);
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.075),
+                rgba(255,255,255,0.03)
+            );
+
+        color: white;
+
+        box-shadow:
+            0 18px 45px rgba(0,0,0,0.28);
     }
 
 
@@ -232,56 +338,50 @@ st.markdown(
 
     [data-testid="stChatMessage"] {
         background: transparent !important;
-
         border: none !important;
-
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding: 8px 0 !important;
     }
 
     [data-testid="stChatMessageContent"] {
-        color: #e9e9eb;
-
-        font-size: 15px;
-
-        line-height: 1.7;
+        color: #dedee3;
+        font-size: 14px;
+        line-height: 1.75;
     }
 
 
-    /* ========================================================
-       USER CHAT BUBBLE
-       ======================================================== */
+    /* USER MESSAGE */
 
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-user"]
-    )
-    [data-testid="stChatMessageContent"] {
+    ) [data-testid="stChatMessageContent"] {
 
         background:
-            rgba(255,255,255,0.075);
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.085),
+                rgba(255,255,255,0.045)
+            );
 
-        border:
-            1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.08);
 
-        border-radius: 18px;
+        border-radius: 20px 20px 6px 20px;
 
-        padding:
-            11px 15px;
+        padding: 12px 17px;
 
-        color: #f5f5f7;
+        color: #f3f3f5;
+
+        box-shadow:
+            0 12px 35px rgba(0,0,0,0.18);
     }
 
 
-    /* ========================================================
-       ASSISTANT CHAT
-       ======================================================== */
+    /* ASSISTANT MESSAGE */
 
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-assistant"]
-    )
-    [data-testid="stChatMessageContent"] {
+    ) [data-testid="stChatMessageContent"] {
 
-        color: #dedee2;
+        color: #d7d7dc;
     }
 
 
@@ -292,86 +392,104 @@ st.markdown(
     [data-testid="stChatInput"] {
         position: fixed;
 
-        bottom: 22px;
-
+        bottom: 20px;
         left: 50%;
 
         transform: translateX(-50%);
 
-        width:
-            min(
-                850px,
-                calc(100% - 32px)
-            );
+        width: min(920px, calc(100% - 30px));
 
         z-index: 999;
     }
 
     [data-testid="stChatInput"] > div {
+        background: rgba(20,21,25,0.88);
 
-        background:
-            rgba(24,25,29,0.90);
+        border: 1px solid rgba(255,255,255,0.13);
 
-        border:
-            1px solid rgba(255,255,255,0.12);
-
-        border-radius: 20px;
+        border-radius: 22px;
 
         box-shadow:
-            0 25px 70px rgba(0,0,0,0.65),
-            inset 0 1px 0 rgba(255,255,255,0.05);
+            0 30px 90px rgba(0,0,0,0.72),
+            0 0 45px rgba(120,120,255,0.025),
+            inset 0 1px 0 rgba(255,255,255,0.06);
 
-        backdrop-filter:
-            blur(25px);
-
-        -webkit-backdrop-filter:
-            blur(25px);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
     }
 
     [data-testid="stChatInput"] textarea {
-
         color: #f5f5f7 !important;
-
-        font-size: 15px !important;
+        font-size: 14px !important;
     }
 
     [data-testid="stChatInput"] textarea::placeholder {
-
-        color: #6e6e73 !important;
+        color: #68686e !important;
     }
 
 
     /* ========================================================
-       TOOL CARD
+       TOOL STATUS
        ======================================================== */
 
     .tool-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
 
-        margin-top: 10px;
-        margin-bottom: 12px;
-
-        padding: 13px 15px;
+        padding: 12px 15px;
+        margin: 7px 0 12px 0;
 
         border-radius: 15px;
 
-        background:
-            rgba(255,255,255,0.035);
+        background: rgba(255,255,255,0.035);
 
-        border:
-            1px solid rgba(255,255,255,0.075);
+        border: 1px solid rgba(255,255,255,0.07);
 
-        color: #8e8e93;
+        color: #85858c;
 
-        font-size: 13px;
+        font-size: 11px;
     }
 
-    .tool-title {
+    .tool-icon {
+        width: 30px;
+        height: 30px;
 
-        color: #f5f5f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
+        border-radius: 9px;
+
+        background: rgba(255,255,255,0.06);
+
+        font-size: 14px;
+    }
+
+    .tool-name {
+        color: #dedee3;
+
+        font-size: 11px;
         font-weight: 600;
+    }
 
-        margin-bottom: 3px;
+
+    /* ========================================================
+       DIVIDER
+       ======================================================== */
+
+    .soft-divider {
+        height: 1px;
+
+        background:
+            linear-gradient(
+                90deg,
+                transparent,
+                rgba(255,255,255,0.07),
+                transparent
+            );
+
+        margin: 25px 0;
     }
 
 
@@ -379,19 +497,16 @@ st.markdown(
        FOOTER
        ======================================================== */
 
-    .footer-text {
-
+    .footer {
         text-align: center;
 
-        color: #454549;
+        margin-top: 80px;
 
-        font-size: 10px;
+        color: #39393e;
 
-        letter-spacing: 0.5px;
+        font-size: 9px;
 
-        margin-top: 75px;
-
-        margin-bottom: 20px;
+        letter-spacing: 1.3px;
     }
 
 
@@ -402,83 +517,171 @@ st.markdown(
     @media (max-width: 700px) {
 
         .block-container {
-
-            padding-left: 18px !important;
-
-            padding-right: 18px !important;
-
-            padding-top: 28px !important;
+            padding: 18px 15px 135px 15px !important;
         }
 
-        .main-title {
-
-            font-size: 30px;
-
-            letter-spacing: -1.2px;
+        .topbar {
+            margin-bottom: 5px;
         }
 
-        .main-subtitle {
-
-            font-size: 13px;
+        .hero {
+            padding-top: 30px;
         }
 
-        .logo {
+        .hero-orb {
+            width: 64px;
+            height: 64px;
 
-            width: 48px;
-            height: 48px;
+            border-radius: 21px;
 
-            border-radius: 15px;
+            font-size: 27px;
+        }
+
+        .hero-title {
+            font-size: 36px;
+            letter-spacing: -1.7px;
+        }
+
+        .hero-subtitle {
+            font-size: 12px;
         }
 
         [data-testid="stChatInput"] {
-
-            width:
-                calc(100% - 20px);
-
-            bottom: 10px;
+            width: calc(100% - 18px);
+            bottom: 9px;
         }
     }
 
     </style>
-    """,
-    unsafe_allow_html=True
+    """
 )
 
 
 # ============================================================
-# HEADER
+# TOP BAR
 # ============================================================
 
-st.markdown(
+st.html(
     """
-    <div class="logo-wrap">
-        <div class="logo">✦</div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    <div class="topbar">
 
-st.markdown(
-    '<div class="main-title">Swas Agent</div>',
-    unsafe_allow_html=True
-)
+        <div class="brand-mini">
 
-st.markdown(
-    '<div class="main-subtitle">Your personal AI assistant</div>',
-    unsafe_allow_html=True
-)
+            <div class="brand-mark">
+                ✦
+            </div>
 
-st.markdown(
-    """
-    <div class="status-wrap">
-        <div class="status">
-            <span class="status-dot"></span>
-            Online · Gemini powered
+            <div class="brand-name">
+                Swas Agent
+                <span class="brand-version">
+                    PERSONAL AI
+                </span>
+            </div>
+
         </div>
+
+        <div class="connection">
+
+            <span class="connection-dot"></span>
+
+            Gemini online
+
+        </div>
+
     </div>
-    """,
-    unsafe_allow_html=True
+    """
 )
+
+
+# ============================================================
+# SESSION STATE
+# ============================================================
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "started" not in st.session_state:
+    st.session_state.started = False
+
+
+# ============================================================
+# HERO / EMPTY STATE
+# ============================================================
+
+if not st.session_state.messages:
+
+    st.html(
+        """
+        <div class="hero">
+
+            <div class="hero-orb">
+                ✦
+            </div>
+
+            <div class="hero-title">
+                What can I help you with?
+            </div>
+
+            <div class="hero-subtitle">
+                Your personal AI assistant for ideas,
+                calculations and your schedule.
+            </div>
+
+        </div>
+        """
+    )
+
+    st.html(
+        '<div class="section-label">Quick actions</div>'
+    )
+
+    quick_col1, quick_col2, quick_col3 = st.columns(
+        3,
+        gap="medium"
+    )
+
+    with quick_col1:
+
+        if st.button(
+            "✨  Ask anything",
+            key="quick_ask"
+        ):
+
+            st.session_state.quick_prompt = (
+                "Give me 5 interesting things I can ask you to help me with."
+            )
+
+            st.rerun()
+
+    with quick_col2:
+
+        if st.button(
+            "📅  Schedule something",
+            key="quick_calendar"
+        ):
+
+            st.session_state.quick_prompt = (
+                "Help me schedule something in my Google Calendar."
+            )
+
+            st.rerun()
+
+    with quick_col3:
+
+        if st.button(
+            "🧮  Calculate",
+            key="quick_calc"
+        ):
+
+            st.session_state.quick_prompt = (
+                "Calculate 125 × 48."
+            )
+
+            st.rerun()
+
+    st.html(
+        '<div class="soft-divider"></div>'
+    )
 
 
 # ============================================================
@@ -542,9 +745,7 @@ calculator_tool = {
 
                 "description":
                     "A mathematical expression."
-
             }
-
         },
 
         "required": [
@@ -561,19 +762,13 @@ calendar_tool = {
     "name": "create_calendar_event",
 
     "description": (
-
         "Creates an event in the user's Google Calendar. "
-
         "Use this whenever the user asks to schedule, "
         "add, create, book, or remember an event. "
-
-        "Convert relative dates such as tomorrow, "
-        "today, next Monday, etc. into exact dates "
-        "using the current date provided to you. "
-
-        "The start time must be in "
-        "YYYY-MM-DD HH:MM format. "
-
+        "Convert relative dates such as tomorrow, today, "
+        "next Monday, etc. into exact dates using the "
+        "current date provided to you. "
+        "The start time must be in YYYY-MM-DD HH:MM format. "
         "Timezone is Asia/Kolkata."
     ),
 
@@ -626,8 +821,7 @@ calendar_tool = {
 
 available_functions = {
 
-    "calculator":
-        calculator,
+    "calculator": calculator,
 
     "create_calendar_event":
         create_calendar_event
@@ -635,13 +829,8 @@ available_functions = {
 
 
 # ============================================================
-# CHAT HISTORY
+# DISPLAY CHAT HISTORY
 # ============================================================
-
-if "messages" not in st.session_state:
-
-    st.session_state.messages = []
-
 
 for message in st.session_state.messages:
 
@@ -655,6 +844,16 @@ for message in st.session_state.messages:
 
 
 # ============================================================
+# QUICK PROMPT
+# ============================================================
+
+quick_prompt = st.session_state.pop(
+    "quick_prompt",
+    None
+)
+
+
+# ============================================================
 # CHAT INPUT
 # ============================================================
 
@@ -662,12 +861,17 @@ user_input = st.chat_input(
     "Message Swas Agent..."
 )
 
+if quick_prompt:
+    user_input = quick_prompt
+
+
+# ============================================================
+# PROCESS USER MESSAGE
+# ============================================================
 
 if user_input:
 
-    # ========================================================
-    # USER MESSAGE
-    # ========================================================
+    st.session_state.started = True
 
     st.session_state.messages.append(
         {
@@ -679,7 +883,6 @@ if user_input:
     with st.chat_message("user"):
 
         st.markdown(user_input)
-
 
     try:
 
@@ -699,11 +902,10 @@ if user_input:
 
 
         # ====================================================
-        # AGENT CONTEXT
+        # AGENT PROMPT
         # ====================================================
 
         agent_input = f"""
-
 You are Swas Agent, a helpful personal AI assistant.
 
 Current date:
@@ -716,7 +918,7 @@ Timezone:
 Asia/Kolkata
 
 
-IMPORTANT:
+IMPORTANT RULES:
 
 1. Understand natural language dates.
 
@@ -748,11 +950,16 @@ IMPORTANT:
 10. After a successful tool call,
     clearly confirm what was done.
 
+11. Be concise but helpful.
+
+12. Do not mention internal tools,
+    function calls, APIs or implementation
+    details unless specifically asked.
+
 
 USER REQUEST:
 
 {user_input}
-
 """
 
 
@@ -784,7 +991,6 @@ USER REQUEST:
             if step.type == "function_call":
 
                 function_call = step
-
                 break
 
 
@@ -802,7 +1008,6 @@ USER REQUEST:
                 function_call.arguments
             )
 
-
             if isinstance(
                 arguments,
                 str
@@ -812,13 +1017,11 @@ USER REQUEST:
                     arguments
                 )
 
-
             function = (
                 available_functions.get(
                     function_name
                 )
             )
-
 
             if function:
 
@@ -828,35 +1031,55 @@ USER REQUEST:
 
                 if function_name == "create_calendar_event":
 
-                    st.markdown(
+                    st.html(
                         """
                         <div class="tool-card">
-                            <div class="tool-title">
-                                📅 Calendar
+
+                            <div class="tool-icon">
+                                📅
                             </div>
-                            Creating your event...
+
+                            <div>
+
+                                <div class="tool-name">
+                                    Calendar
+                                </div>
+
+                                Creating your event...
+
+                            </div>
+
                         </div>
-                        """,
-                        unsafe_allow_html=True
+                        """
                     )
 
                 elif function_name == "calculator":
 
-                    st.markdown(
+                    st.html(
                         """
                         <div class="tool-card">
-                            <div class="tool-title">
-                                🧮 Calculator
+
+                            <div class="tool-icon">
+                                🧮
                             </div>
-                            Calculating...
+
+                            <div>
+
+                                <div class="tool-name">
+                                    Calculator
+                                </div>
+
+                                Working it out...
+
+                            </div>
+
                         </div>
-                        """,
-                        unsafe_allow_html=True
+                        """
                     )
 
 
                 # ============================================
-                # RUN TOOL
+                # RUN FUNCTION
                 # ============================================
 
                 tool_result = function(
@@ -865,7 +1088,7 @@ USER REQUEST:
 
 
                 # ============================================
-                # SEND RESULT BACK TO GEMINI
+                # SEND RESULT TO GEMINI
                 # ============================================
 
                 final_interaction = (
@@ -877,6 +1100,7 @@ USER REQUEST:
                             interaction.id,
 
                         input=[
+
                             {
                                 "type":
                                     "function_result",
@@ -890,6 +1114,7 @@ USER REQUEST:
                                 "result":
                                     tool_result
                             }
+
                         ],
 
                         tools=[
@@ -899,18 +1124,15 @@ USER REQUEST:
                     )
                 )
 
-
                 response = (
                     final_interaction.output_text
                 )
-
 
             else:
 
                 response = (
                     "❌ Unknown tool requested."
                 )
-
 
         else:
 
@@ -932,9 +1154,7 @@ USER REQUEST:
 
     with st.chat_message("assistant"):
 
-        st.markdown(
-            response
-        )
+        st.markdown(response)
 
 
     # ========================================================
@@ -942,7 +1162,6 @@ USER REQUEST:
     # ========================================================
 
     st.session_state.messages.append(
-
         {
             "role": "assistant",
             "content": response
@@ -954,11 +1173,10 @@ USER REQUEST:
 # FOOTER
 # ============================================================
 
-st.markdown(
+st.html(
     """
-    <div class="footer-text">
-        SWAS AGENT · PRIVATE AI ASSISTANT
+    <div class="footer">
+        SWAS AGENT · PERSONAL AI SYSTEM · GEMINI
     </div>
-    """,
-    unsafe_allow_html=True
+    """
 )
