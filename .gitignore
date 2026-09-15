@@ -2,3 +2,4 @@ venv/
 .env
 __pycache__/
 calendar_token.pkl
+tasks.json

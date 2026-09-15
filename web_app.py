@@ -3,11 +3,20 @@ from datetime import datetime
 import streamlit as st
 
 from app import run_agent
+from tools.tasks import list_tasks, complete_task, delete_task
 
 
 # ============================================================
 # CONFIG
 # ============================================================
+
+st.set_page_config(
+    page_title="Swas Agent",
+    page_icon="✦",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 
 # ============================================================
 # PREMIUM CSS
@@ -171,11 +180,13 @@ st.html(
 
     .hero {
         text-align: center;
-        padding-top: 44px;
-        padding-bottom: 30px;
+        padding-top: 62px;
+        padding-bottom: 34px;
     }
 
     .hero-orb {
+        position: relative;
+
         width: 76px;
         height: 76px;
 
@@ -208,6 +219,19 @@ st.html(
 
         font-size: 32px;
         color: white;
+    }
+
+    .hero-orb::after {
+        content: "";
+        position: absolute;
+        inset: -12px;
+
+        border-radius: 31px;
+
+        border: 1px solid rgba(255,255,255,0.035);
+
+        box-shadow:
+            0 0 55px rgba(125,125,255,0.045);
     }
 
     .hero-title {
@@ -265,9 +289,9 @@ st.html(
 
     .stButton > button {
         width: 100%;
-        min-height: 78px;
+        min-height: 48px;
 
-        border-radius: 17px;
+        border-radius: 14px;
 
         border: 1px solid rgba(255,255,255,0.075);
 
@@ -314,51 +338,125 @@ st.html(
        ======================================================== */
 
     [data-testid="stChatMessage"] {
+        max-width: 900px;
+        margin: 0 auto !important;
         background: transparent !important;
         border: none !important;
-        padding: 8px 0 !important;
+        padding: 9px 0 !important;
     }
 
     [data-testid="stChatMessageContent"] {
         color: #dedee3;
         font-size: 14px;
         line-height: 1.75;
+        max-width: 100%;
+        padding: 0 !important;
+    }
+
+    [data-testid="stChatMessage"]
+    [data-testid="chatAvatarIcon-user"],
+    [data-testid="stChatMessage"]
+    [data-testid="chatAvatarIcon-assistant"] {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.28);
+    }
+
+    [data-testid="stChatMessage"]
+    [data-testid="stChatMessageAvatar"] {
+        padding-top: 2px !important;
     }
 
 
-    /* USER MESSAGE */
+    /* ========================================================
+       USER BUBBLE
+       ======================================================== */
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-user"]
+    ) {
+        justify-content: flex-end;
+    }
 
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-user"]
     ) [data-testid="stChatMessageContent"] {
 
+        width: fit-content;
+        max-width: min(720px, 78%);
+
+        margin-left: auto;
+
+        padding: 12px 16px !important;
+
+        border-radius: 18px 18px 5px 18px !important;
+
         background:
             linear-gradient(
                 145deg,
-                rgba(255,255,255,0.085),
+                rgba(255,255,255,0.095),
                 rgba(255,255,255,0.045)
-            );
+            ) !important;
 
-        border: 1px solid rgba(255,255,255,0.08);
-
-        border-radius: 20px 20px 6px 20px;
-
-        padding: 12px 17px;
-
-        color: #f3f3f5;
+        border: 1px solid rgba(255,255,255,0.085) !important;
 
         box-shadow:
-            0 12px 35px rgba(0,0,0,0.18);
+            0 12px 35px rgba(0,0,0,0.20),
+            inset 0 1px 0 rgba(255,255,255,0.035);
     }
 
 
-    /* ASSISTANT MESSAGE */
+    /* ========================================================
+       ASSISTANT RESPONSE
+       ======================================================== */
 
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-assistant"]
     ) [data-testid="stChatMessageContent"] {
 
-        color: #d7d7dc;
+        max-width: min(780px, 88%);
+
+        color: #e1e1e6 !important;
+
+        padding-top: 2px !important;
+    }
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-assistant"]
+    ) [data-testid="stChatMessageContent"] p {
+
+        margin: 0 0 8px 0;
+    }
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-assistant"]
+    ) [data-testid="stChatMessageContent"] p:last-child {
+
+        margin-bottom: 0;
+    }
+
+    [data-testid="stChatMessageContent"] strong {
+        color: #ffffff;
+        font-weight: 650;
+    }
+
+    [data-testid="stChatMessageContent"] code {
+        background: rgba(255,255,255,0.065);
+
+        border: 1px solid rgba(255,255,255,0.07);
+
+        border-radius: 6px;
+
+        padding: 2px 5px;
+    }
+
+    [data-testid="stChatMessageContent"] pre {
+        border-radius: 14px !important;
+
+        border: 1px solid rgba(255,255,255,0.08) !important;
+
+        background: #0b0c10 !important;
     }
 
 
@@ -369,7 +467,7 @@ st.html(
     [data-testid="stChatInput"] {
         position: fixed;
 
-        bottom: 20px;
+        bottom: 18px;
         left: 50%;
 
         transform: translateX(-50%);
@@ -380,11 +478,13 @@ st.html(
     }
 
     [data-testid="stChatInput"] > div {
-        background: rgba(20,21,25,0.88);
+        min-height: 56px;
 
-        border: 1px solid rgba(255,255,255,0.13);
+        border-radius: 19px !important;
 
-        border-radius: 22px;
+        background: rgba(15,16,20,0.92) !important;
+
+        border: 1px solid rgba(255,255,255,0.12) !important;
 
         box-shadow:
             0 30px 90px rgba(0,0,0,0.72),
@@ -398,6 +498,9 @@ st.html(
     [data-testid="stChatInput"] textarea {
         color: #f5f5f7 !important;
         font-size: 14px !important;
+
+        padding-top: 15px !important;
+        padding-bottom: 13px !important;
     }
 
     [data-testid="stChatInput"] textarea::placeholder {
@@ -406,48 +509,218 @@ st.html(
 
 
     /* ========================================================
-       TOOL STATUS
+       TOOL ACTIVITY
        ======================================================== */
 
     .tool-card {
+        width: min(700px, 100%);
+
+        box-sizing: border-box;
+
         display: flex;
         align-items: center;
+
         gap: 12px;
 
-        padding: 12px 15px;
-        margin: 7px 0 12px 0;
+        padding: 10px 13px;
 
-        border-radius: 15px;
+        margin: 2px 0 10px 0;
 
-        background: rgba(255,255,255,0.035);
+        border-radius: 13px;
 
-        border: 1px solid rgba(255,255,255,0.07);
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.045),
+                rgba(255,255,255,0.018)
+            );
 
-        color: #85858c;
+        border: 1px solid rgba(255,255,255,0.065);
 
-        font-size: 11px;
+        color: #777982;
+
+        font-size: 10px;
     }
 
-    .tool-icon {
-        width: 30px;
-        height: 30px;
+    .tool-card .tool-icon {
+        flex: 0 0 28px;
+
+        width: 28px;
+        height: 28px;
+
+        border-radius: 8px;
+
+        background: rgba(255,255,255,0.055);
 
         display: flex;
         align-items: center;
         justify-content: center;
 
-        border-radius: 9px;
-
-        background: rgba(255,255,255,0.06);
-
-        font-size: 14px;
+        font-size: 13px;
     }
 
-    .tool-name {
+    .tool-card .tool-name {
+        color: #dfe0e5;
+
+        font-size: 10px;
+
+        font-weight: 650;
+
+        margin-bottom: 2px;
+
+        letter-spacing: 0.1px;
+    }
+
+    .activity-dot {
+        width: 6px;
+        height: 6px;
+
+        border-radius: 50%;
+
+        background: #8b8dff;
+
+        box-shadow:
+            0 0 12px rgba(139,141,255,0.75);
+
+        animation:
+            swasPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes swasPulse {
+
+        0%, 100% {
+            opacity: 0.45;
+            transform: scale(0.85);
+        }
+
+        50% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+
+    /* ========================================================
+       TASK PANEL
+       ======================================================== */
+
+    .task-panel {
+        max-width: 900px;
+
+        margin: 20px auto 28px auto;
+
+        padding: 18px;
+
+        border-radius: 20px;
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.045),
+                rgba(255,255,255,0.018)
+            );
+
+        border: 1px solid rgba(255,255,255,0.065);
+
+        box-shadow:
+            0 20px 60px rgba(0,0,0,0.20);
+    }
+
+    .task-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        margin-bottom: 14px;
+    }
+
+    .task-title {
+        color: #eeeeF2;
+
+        font-size: 13px;
+
+        font-weight: 650;
+    }
+
+    .task-subtitle {
+        color: #686970;
+
+        font-size: 10px;
+
+        margin-top: 3px;
+    }
+
+    .task-row {
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 12px;
+
+        margin-top: 8px;
+
+        border-radius: 13px;
+
+        background: rgba(255,255,255,0.025);
+
+        border: 1px solid rgba(255,255,255,0.045);
+    }
+
+    .task-check {
+        width: 9px;
+        height: 9px;
+
+        border-radius: 50%;
+
+        background: #8b8dff;
+
+        box-shadow:
+            0 0 12px rgba(139,141,255,0.45);
+
+        flex-shrink: 0;
+    }
+
+    .task-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .task-name {
         color: #dedee3;
 
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 12px;
+
+        font-weight: 550;
+    }
+
+    .task-meta {
+        color: #666870;
+
+        font-size: 9px;
+
+        margin-top: 3px;
+    }
+
+    .priority-high {
+        color: #ff8b8b;
+    }
+
+    .priority-medium {
+        color: #d7c47a;
+    }
+
+    .priority-low {
+        color: #86c995;
+    }
+
+    .completed-task {
+        opacity: 0.55;
+    }
+
+    .completed-task .task-name {
+        text-decoration: line-through;
     }
 
 
@@ -484,207 +757,14 @@ st.html(
         font-size: 9px;
 
         letter-spacing: 1.3px;
-    }
 
-
-    /* ========================================================
-       PREMIUM CHAT V2
-       ======================================================== */
-
-    .chat-shell {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    [data-testid="stChatMessage"] {
-        max-width: 900px;
-        margin: 0 auto !important;
-        padding: 9px 0 !important;
-    }
-
-    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"],
-    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
-        width: 32px !important;
-        height: 32px !important;
-        border-radius: 10px !important;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.28);
-    }
-
-    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
-        padding-top: 2px !important;
-    }
-
-    [data-testid="stChatMessageContent"] {
-        max-width: 100%;
-        padding: 0 !important;
-    }
-
-    /* User bubble */
-    [data-testid="stChatMessage"]:has(
-        [data-testid="chatAvatarIcon-user"]
-    ) {
-        justify-content: flex-end;
-    }
-
-    [data-testid="stChatMessage"]:has(
-        [data-testid="chatAvatarIcon-user"]
-    ) [data-testid="stChatMessageContent"] {
-        width: fit-content;
-        max-width: min(720px, 78%);
-        margin-left: auto;
-        padding: 12px 16px !important;
-        border-radius: 18px 18px 5px 18px !important;
-        background:
-            linear-gradient(
-                145deg,
-                rgba(255,255,255,0.095),
-                rgba(255,255,255,0.045)
-            ) !important;
-        border: 1px solid rgba(255,255,255,0.085) !important;
-        box-shadow:
-            0 12px 35px rgba(0,0,0,0.20),
-            inset 0 1px 0 rgba(255,255,255,0.035);
-    }
-
-    /* Assistant response */
-    [data-testid="stChatMessage"]:has(
-        [data-testid="chatAvatarIcon-assistant"]
-    ) [data-testid="stChatMessageContent"] {
-        max-width: min(780px, 88%);
-        color: #e1e1e6 !important;
-        padding-top: 2px !important;
-    }
-
-    [data-testid="stChatMessage"]:has(
-        [data-testid="chatAvatarIcon-assistant"]
-    ) [data-testid="stChatMessageContent"] p {
-        margin: 0 0 8px 0;
-    }
-
-    [data-testid="stChatMessage"]:has(
-        [data-testid="chatAvatarIcon-assistant"]
-    ) [data-testid="stChatMessageContent"] p:last-child {
-        margin-bottom: 0;
-    }
-
-    /* Markdown polish */
-    [data-testid="stChatMessageContent"] strong {
-        color: #ffffff;
-        font-weight: 650;
-    }
-
-    [data-testid="stChatMessageContent"] code {
-        background: rgba(255,255,255,0.065);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 6px;
-        padding: 2px 5px;
-    }
-
-    [data-testid="stChatMessageContent"] pre {
-        border-radius: 14px !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        background: #0b0c10 !important;
-    }
-
-    /* Compact agent activity */
-    .tool-card {
-        width: min(700px, 100%);
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 13px;
-        margin: 2px 0 10px 0;
-        border-radius: 13px;
-        background:
-            linear-gradient(
-                145deg,
-                rgba(255,255,255,0.045),
-                rgba(255,255,255,0.018)
-            );
-        border: 1px solid rgba(255,255,255,0.065);
-        color: #777982;
-        font-size: 10px;
-    }
-
-    .tool-card .tool-icon {
-        flex: 0 0 28px;
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        background: rgba(255,255,255,0.055);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-    }
-
-    .tool-card .tool-name {
-        color: #dfe0e5;
-        font-size: 10px;
-        font-weight: 650;
-        margin-bottom: 2px;
-        letter-spacing: 0.1px;
-    }
-
-    .activity-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #8b8dff;
-        box-shadow: 0 0 12px rgba(139,141,255,0.75);
-        animation: swasPulse 1.2s ease-in-out infinite;
-    }
-
-    @keyframes swasPulse {
-        0%, 100% { opacity: 0.45; transform: scale(0.85); }
-        50% { opacity: 1; transform: scale(1); }
-    }
-
-    /* Better input */
-    [data-testid="stChatInput"] {
-        bottom: 18px;
-    }
-
-    [data-testid="stChatInput"] > div {
-        min-height: 56px;
-        border-radius: 19px !important;
-        background: rgba(15,16,20,0.92) !important;
-        border: 1px solid rgba(255,255,255,0.12) !important;
-    }
-
-    [data-testid="stChatInput"] textarea {
-        padding-top: 15px !important;
-        padding-bottom: 13px !important;
-    }
-
-    /* Empty state refinement */
-    .hero {
-        padding-top: 62px;
-        padding-bottom: 34px;
-    }
-
-    .hero-orb {
-        position: relative;
-    }
-
-    .hero-orb::after {
-        content: "";
-        position: absolute;
-        inset: -12px;
-        border-radius: 31px;
-        border: 1px solid rgba(255,255,255,0.035);
-        box-shadow: 0 0 55px rgba(125,125,255,0.045);
-    }
-
-    .footer {
         opacity: 0.7;
     }
 
 
     /* ========================================================
        MOBILE
-       ========================================================
+       ======================================================== */
 
     @media (max-width: 700px) {
 
@@ -711,6 +791,7 @@ st.html(
 
         .hero-title {
             font-size: 36px;
+
             letter-spacing: -1.7px;
         }
 
@@ -720,8 +801,24 @@ st.html(
 
         [data-testid="stChatInput"] {
             width: calc(100% - 18px);
+
             bottom: 9px;
         }
+
+        [data-testid="stChatMessage"]:has(
+            [data-testid="chatAvatarIcon-user"]
+        ) [data-testid="stChatMessageContent"] {
+
+            max-width: 85%;
+        }
+
+        [data-testid="stChatMessage"]:has(
+            [data-testid="chatAvatarIcon-assistant"]
+        ) [data-testid="stChatMessageContent"] {
+
+            max-width: 94%;
+        }
+
     }
 
     </style>
@@ -745,6 +842,7 @@ st.html(
 
             <div class="brand-name">
                 Swas Agent
+
                 <span class="brand-version">
                     PERSONAL AI
                 </span>
@@ -777,6 +875,166 @@ if "started" not in st.session_state:
 
 
 # ============================================================
+# TASK PANEL
+# ============================================================
+
+pending_tasks = list_tasks()
+all_tasks = list_tasks(include_completed=True)
+
+completed_tasks = [
+    task
+    for task in all_tasks
+    if task.get("completed", False)
+]
+
+
+if pending_tasks or completed_tasks:
+
+    st.html(
+        """
+        <div class="task-panel">
+
+            <div class="task-header">
+
+                <div>
+                    <div class="task-title">
+                        ✦ My Tasks
+                    </div>
+
+                    <div class="task-subtitle">
+                        Your personal task list
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        """
+    )
+
+    # --------------------------------------------------------
+    # PENDING TASKS
+    # --------------------------------------------------------
+
+    if pending_tasks:
+
+        for task in pending_tasks:
+
+            priority = task.get(
+                "priority",
+                "medium"
+            )
+
+            due_date = task.get(
+                "due_date"
+            )
+
+            if due_date:
+                meta = (
+                    f"Due: {due_date} · "
+                    f"Priority: {priority}"
+                )
+            else:
+                meta = f"Priority: {priority}"
+
+            col1, col2 = st.columns(
+                [5, 1],
+                gap="small"
+            )
+
+            with col1:
+
+                st.html(
+                    f"""
+                    <div class="task-row">
+
+                        <div class="task-check"></div>
+
+                        <div class="task-info">
+
+                            <div class="task-name">
+                                {task.get("title", "Untitled task")}
+                            </div>
+
+                            <div class="task-meta priority-{priority}">
+                                {meta}
+                            </div>
+
+                        </div>
+
+                    </div>
+                    """
+                )
+
+            with col2:
+
+                if st.button(
+                    "✓ Done",
+                    key=f"complete_task_{task['id']}"
+                ):
+
+                    complete_task(
+                        task["id"]
+                    )
+
+                    st.rerun()
+
+    # --------------------------------------------------------
+    # COMPLETED TASKS
+    # --------------------------------------------------------
+
+    if completed_tasks:
+
+        with st.expander(
+            f"Completed · {len(completed_tasks)}"
+        ):
+
+            for task in completed_tasks:
+
+                col1, col2 = st.columns(
+                    [5, 1],
+                    gap="small"
+                )
+
+                with col1:
+
+                    st.html(
+                        f"""
+                        <div class="task-row completed-task">
+
+                            <div class="task-check"></div>
+
+                            <div class="task-info">
+
+                                <div class="task-name">
+                                    {task.get("title", "Untitled task")}
+                                </div>
+
+                                <div class="task-meta">
+                                    Completed
+                                </div>
+
+                            </div>
+
+                        </div>
+                        """
+                    )
+
+                with col2:
+
+                    if st.button(
+                        "Delete",
+                        key=f"delete_task_{task['id']}"
+                    ):
+
+                        delete_task(
+                            task["id"]
+                        )
+
+                        st.rerun()
+
+
+# ============================================================
 # HERO / EMPTY STATE
 # ============================================================
 
@@ -796,7 +1054,7 @@ if not st.session_state.messages:
 
             <div class="hero-subtitle">
                 Your personal AI assistant for ideas,
-                calculations and your schedule.
+                tasks, calculations and your schedule.
             </div>
 
         </div>
@@ -864,7 +1122,11 @@ for message in st.session_state.messages:
 
     role = message["role"]
 
-    avatar = "🤖" if role == "assistant" else "👤"
+    avatar = (
+        "🤖"
+        if role == "assistant"
+        else "👤"
+    )
 
     with st.chat_message(
         role,
@@ -913,68 +1175,254 @@ if user_input:
         }
     )
 
-    with st.chat_message("user", avatar="👤"):
-        st.markdown(user_input)
+    with st.chat_message(
+        "user",
+        avatar="👤"
+    ):
+
+        st.markdown(
+            user_input
+        )
 
     try:
 
-        # --------------------------------------------------------
+        # ----------------------------------------------------
         # SWAS AGENT BRAIN
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
-        with st.chat_message("assistant", avatar="🤖"):
+        with st.chat_message(
+            "assistant",
+            avatar="🤖"
+        ):
 
-            result = run_agent(user_input)
+            result = run_agent(
+                user_input
+            )
 
-            tool_used = result.get("tool_used")
+            tool_used = result.get(
+                "tool_used"
+            )
+
+
+            # ------------------------------------------------
+            # TOOL ACTIVITY
+            # ------------------------------------------------
 
             if tool_used == "create_calendar_event":
 
                 st.html(
                     """
                     <div class="tool-card">
-                        <div class="tool-icon">📅</div>
-                        <div>
-                            <div class="tool-name">Calendar</div>
-                            Working with your Google Calendar...
+
+                        <div class="tool-icon">
+                            📅
                         </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Calendar
+                            </div>
+
+                            Working with your Google Calendar...
+
+                        </div>
+
                         <div class="activity-dot"></div>
+
                     </div>
                     """
                 )
+
 
             elif tool_used == "calculator":
 
                 st.html(
                     """
                     <div class="tool-card">
-                        <div class="tool-icon">🧮</div>
-                        <div>
-                            <div class="tool-name">Calculator</div>
-                            Working it out...
+
+                        <div class="tool-icon">
+                            🧮
                         </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Calculator
+                            </div>
+
+                            Working it out...
+
+                        </div>
+
                         <div class="activity-dot"></div>
+
                     </div>
                     """
                 )
+
+
+            elif tool_used == "add_task":
+
+                st.html(
+                    """
+                    <div class="tool-card">
+
+                        <div class="tool-icon">
+                            ✅
+                        </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Task Manager
+                            </div>
+
+                            Adding your task...
+
+                        </div>
+
+                        <div class="activity-dot"></div>
+
+                    </div>
+                    """
+                )
+
+
+            elif tool_used == "list_tasks":
+
+                st.html(
+                    """
+                    <div class="tool-card">
+
+                        <div class="tool-icon">
+                            📋
+                        </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Task Manager
+                            </div>
+
+                            Checking your tasks...
+
+                        </div>
+
+                        <div class="activity-dot"></div>
+
+                    </div>
+                    """
+                )
+
+
+            elif tool_used == "complete_task":
+
+                st.html(
+                    """
+                    <div class="tool-card">
+
+                        <div class="tool-icon">
+                            ☑️
+                        </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Task Manager
+                            </div>
+
+                            Marking task as complete...
+
+                        </div>
+
+                        <div class="activity-dot"></div>
+
+                    </div>
+                    """
+                )
+
+
+            elif tool_used == "delete_task":
+
+                st.html(
+                    """
+                    <div class="tool-card">
+
+                        <div class="tool-icon">
+                            🗑️
+                        </div>
+
+                        <div>
+
+                            <div class="tool-name">
+                                Task Manager
+                            </div>
+
+                            Removing task...
+
+                        </div>
+
+                        <div class="activity-dot"></div>
+
+                    </div>
+                    """
+                )
+
+
+            # ------------------------------------------------
+            # RESPONSE
+            # ------------------------------------------------
 
             response = result.get(
                 "response",
                 "I couldn't generate a response."
             )
 
-            st.markdown(response)
+            st.markdown(
+                response
+            )
+
+
+            # ------------------------------------------------
+            # QUOTA ERROR
+            # ------------------------------------------------
 
     except Exception as e:
 
-        response = f"❌ Something went wrong: {str(e)}"
+        error_text = str(e)
 
-        with st.chat_message("assistant", avatar="🤖"):
-            st.markdown(response)
+        if (
+            "429" in error_text
+            or "quota" in error_text.lower()
+            or "too_many_requests" in error_text.lower()
+        ):
 
-    # ------------------------------------------------------------
+            response = (
+                "⚠️ Gemini's current request limit has been reached. "
+                "Your local tools are still safe and working. "
+                "Please wait a little and try again."
+            )
+
+        else:
+
+            response = (
+                f"❌ Something went wrong: {error_text}"
+            )
+
+        with st.chat_message(
+            "assistant",
+            avatar="🤖"
+        ):
+
+            st.markdown(
+                response
+            )
+
+
+    # --------------------------------------------------------
     # SAVE RESPONSE
-    # ------------------------------------------------------------
+    # --------------------------------------------------------
 
     st.session_state.messages.append(
         {
