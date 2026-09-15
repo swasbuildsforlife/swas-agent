@@ -1,36 +1,13 @@
-import os
-import json
 from datetime import datetime
-from textwrap import dedent
 
 import streamlit as st
-from dotenv import load_dotenv
-from google import genai
 
-from calendar_tools import create_calendar_event
+from app import run_agent
 
 
 # ============================================================
 # CONFIG
 # ============================================================
-
-st.set_page_config(
-    page_title="Swas Agent",
-    page_icon="✦",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    st.error("GEMINI_API_KEY not found in .env")
-    st.stop()
-
-client = genai.Client(api_key=api_key)
-
 
 # ============================================================
 # PREMIUM CSS
@@ -511,8 +488,203 @@ st.html(
 
 
     /* ========================================================
-       MOBILE
+       PREMIUM CHAT V2
        ======================================================== */
+
+    .chat-shell {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    [data-testid="stChatMessage"] {
+        max-width: 900px;
+        margin: 0 auto !important;
+        padding: 9px 0 !important;
+    }
+
+    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"],
+    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.28);
+    }
+
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
+        padding-top: 2px !important;
+    }
+
+    [data-testid="stChatMessageContent"] {
+        max-width: 100%;
+        padding: 0 !important;
+    }
+
+    /* User bubble */
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-user"]
+    ) {
+        justify-content: flex-end;
+    }
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-user"]
+    ) [data-testid="stChatMessageContent"] {
+        width: fit-content;
+        max-width: min(720px, 78%);
+        margin-left: auto;
+        padding: 12px 16px !important;
+        border-radius: 18px 18px 5px 18px !important;
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.095),
+                rgba(255,255,255,0.045)
+            ) !important;
+        border: 1px solid rgba(255,255,255,0.085) !important;
+        box-shadow:
+            0 12px 35px rgba(0,0,0,0.20),
+            inset 0 1px 0 rgba(255,255,255,0.035);
+    }
+
+    /* Assistant response */
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-assistant"]
+    ) [data-testid="stChatMessageContent"] {
+        max-width: min(780px, 88%);
+        color: #e1e1e6 !important;
+        padding-top: 2px !important;
+    }
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-assistant"]
+    ) [data-testid="stChatMessageContent"] p {
+        margin: 0 0 8px 0;
+    }
+
+    [data-testid="stChatMessage"]:has(
+        [data-testid="chatAvatarIcon-assistant"]
+    ) [data-testid="stChatMessageContent"] p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Markdown polish */
+    [data-testid="stChatMessageContent"] strong {
+        color: #ffffff;
+        font-weight: 650;
+    }
+
+    [data-testid="stChatMessageContent"] code {
+        background: rgba(255,255,255,0.065);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 6px;
+        padding: 2px 5px;
+    }
+
+    [data-testid="stChatMessageContent"] pre {
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        background: #0b0c10 !important;
+    }
+
+    /* Compact agent activity */
+    .tool-card {
+        width: min(700px, 100%);
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 13px;
+        margin: 2px 0 10px 0;
+        border-radius: 13px;
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.045),
+                rgba(255,255,255,0.018)
+            );
+        border: 1px solid rgba(255,255,255,0.065);
+        color: #777982;
+        font-size: 10px;
+    }
+
+    .tool-card .tool-icon {
+        flex: 0 0 28px;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.055);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+    }
+
+    .tool-card .tool-name {
+        color: #dfe0e5;
+        font-size: 10px;
+        font-weight: 650;
+        margin-bottom: 2px;
+        letter-spacing: 0.1px;
+    }
+
+    .activity-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #8b8dff;
+        box-shadow: 0 0 12px rgba(139,141,255,0.75);
+        animation: swasPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes swasPulse {
+        0%, 100% { opacity: 0.45; transform: scale(0.85); }
+        50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Better input */
+    [data-testid="stChatInput"] {
+        bottom: 18px;
+    }
+
+    [data-testid="stChatInput"] > div {
+        min-height: 56px;
+        border-radius: 19px !important;
+        background: rgba(15,16,20,0.92) !important;
+        border: 1px solid rgba(255,255,255,0.12) !important;
+    }
+
+    [data-testid="stChatInput"] textarea {
+        padding-top: 15px !important;
+        padding-bottom: 13px !important;
+    }
+
+    /* Empty state refinement */
+    .hero {
+        padding-top: 62px;
+        padding-bottom: 34px;
+    }
+
+    .hero-orb {
+        position: relative;
+    }
+
+    .hero-orb::after {
+        content: "";
+        position: absolute;
+        inset: -12px;
+        border-radius: 31px;
+        border: 1px solid rgba(255,255,255,0.035);
+        box-shadow: 0 0 55px rgba(125,125,255,0.045);
+    }
+
+    .footer {
+        opacity: 0.7;
+    }
+
+
+    /* ========================================================
+       MOBILE
+       ========================================================
 
     @media (max-width: 700px) {
 
@@ -685,157 +857,18 @@ if not st.session_state.messages:
 
 
 # ============================================================
-# CALCULATOR
-# ============================================================
-
-def calculator(expression: str):
-
-    allowed_characters = "0123456789+-*/().% "
-
-    if not all(
-        char in allowed_characters
-        for char in expression
-    ):
-        return {
-            "error": "Invalid mathematical expression."
-        }
-
-    try:
-
-        result = eval(
-            expression,
-            {"__builtins__": {}},
-            {}
-        )
-
-        return {
-            "expression": expression,
-            "result": result
-        }
-
-    except Exception:
-
-        return {
-            "error": "Could not calculate the expression."
-        }
-
-
-# ============================================================
-# TOOL DECLARATIONS
-# ============================================================
-
-calculator_tool = {
-
-    "type": "function",
-
-    "name": "calculator",
-
-    "description":
-        "Calculates mathematical expressions accurately.",
-
-    "parameters": {
-
-        "type": "object",
-
-        "properties": {
-
-            "expression": {
-
-                "type": "string",
-
-                "description":
-                    "A mathematical expression."
-            }
-        },
-
-        "required": [
-            "expression"
-        ]
-    }
-}
-
-
-calendar_tool = {
-
-    "type": "function",
-
-    "name": "create_calendar_event",
-
-    "description": (
-        "Creates an event in the user's Google Calendar. "
-        "Use this whenever the user asks to schedule, "
-        "add, create, book, or remember an event. "
-        "Convert relative dates such as tomorrow, today, "
-        "next Monday, etc. into exact dates using the "
-        "current date provided to you. "
-        "The start time must be in YYYY-MM-DD HH:MM format. "
-        "Timezone is Asia/Kolkata."
-    ),
-
-    "parameters": {
-
-        "type": "object",
-
-        "properties": {
-
-            "title": {
-
-                "type": "string",
-
-                "description":
-                    "Title of the calendar event."
-            },
-
-            "start_time": {
-
-                "type": "string",
-
-                "description":
-                    "Event start time in YYYY-MM-DD HH:MM format."
-            },
-
-            "duration_minutes": {
-
-                "type": "integer",
-
-                "description":
-                    "Duration in minutes."
-            },
-
-            "description": {
-
-                "type": "string",
-
-                "description":
-                    "Optional event description."
-            }
-        },
-
-        "required": [
-            "title",
-            "start_time"
-        ]
-    }
-}
-
-
-available_functions = {
-
-    "calculator": calculator,
-
-    "create_calendar_event":
-        create_calendar_event
-}
-
-
-# ============================================================
 # DISPLAY CHAT HISTORY
 # ============================================================
 
 for message in st.session_state.messages:
 
+    role = message["role"]
+
+    avatar = "🤖" if role == "assistant" else "👤"
+
     with st.chat_message(
-        message["role"]
+        role,
+        avatar=avatar
     ):
 
         st.markdown(
@@ -880,286 +913,68 @@ if user_input:
         }
     )
 
-    with st.chat_message("user"):
-
+    with st.chat_message("user", avatar="👤"):
         st.markdown(user_input)
 
     try:
 
-        # ====================================================
-        # CURRENT DATE / TIME
-        # ====================================================
+        # --------------------------------------------------------
+        # SWAS AGENT BRAIN
+        # --------------------------------------------------------
 
-        now = datetime.now()
+        with st.chat_message("assistant", avatar="🤖"):
 
-        current_date = now.strftime(
-            "%Y-%m-%d"
-        )
+            result = run_agent(user_input)
 
-        current_time = now.strftime(
-            "%H:%M"
-        )
+            tool_used = result.get("tool_used")
 
+            if tool_used == "create_calendar_event":
 
-        # ====================================================
-        # AGENT PROMPT
-        # ====================================================
-
-        agent_input = f"""
-You are Swas Agent, a helpful personal AI assistant.
-
-Current date:
-{current_date}
-
-Current time:
-{current_time}
-
-Timezone:
-Asia/Kolkata
-
-
-IMPORTANT RULES:
-
-1. Understand natural language dates.
-
-2. "Today" means the current date.
-
-3. "Tomorrow" means one day after
-   the current date.
-
-4. "Yesterday" means one day before
-   the current date.
-
-5. Resolve phrases such as
-   "next Monday" using the current date.
-
-6. When creating calendar events,
-   convert dates and times into:
-
-   YYYY-MM-DD HH:MM
-
-7. Use the calendar tool whenever
-   the user asks to create or schedule
-   a Google Calendar event.
-
-8. Do not ask the user for today's date.
-   It is already provided above.
-
-9. Use Asia/Kolkata timezone.
-
-10. After a successful tool call,
-    clearly confirm what was done.
-
-11. Be concise but helpful.
-
-12. Do not mention internal tools,
-    function calls, APIs or implementation
-    details unless specifically asked.
-
-
-USER REQUEST:
-
-{user_input}
-"""
-
-
-        # ====================================================
-        # GEMINI
-        # ====================================================
-
-        interaction = client.interactions.create(
-
-            model="gemini-3.6-flash",
-
-            input=agent_input,
-
-            tools=[
-                calculator_tool,
-                calendar_tool
-            ]
-        )
-
-
-        # ====================================================
-        # FIND TOOL CALL
-        # ====================================================
-
-        function_call = None
-
-        for step in interaction.steps:
-
-            if step.type == "function_call":
-
-                function_call = step
-                break
-
-
-        # ====================================================
-        # TOOL EXECUTION
-        # ====================================================
-
-        if function_call:
-
-            function_name = (
-                function_call.name
-            )
-
-            arguments = (
-                function_call.arguments
-            )
-
-            if isinstance(
-                arguments,
-                str
-            ):
-
-                arguments = json.loads(
-                    arguments
-                )
-
-            function = (
-                available_functions.get(
-                    function_name
-                )
-            )
-
-            if function:
-
-                # ============================================
-                # TOOL STATUS
-                # ============================================
-
-                if function_name == "create_calendar_event":
-
-                    st.html(
-                        """
-                        <div class="tool-card">
-
-                            <div class="tool-icon">
-                                📅
-                            </div>
-
-                            <div>
-
-                                <div class="tool-name">
-                                    Calendar
-                                </div>
-
-                                Creating your event...
-
-                            </div>
-
+                st.html(
+                    """
+                    <div class="tool-card">
+                        <div class="tool-icon">📅</div>
+                        <div>
+                            <div class="tool-name">Calendar</div>
+                            Working with your Google Calendar...
                         </div>
-                        """
-                    )
+                        <div class="activity-dot"></div>
+                    </div>
+                    """
+                )
 
-                elif function_name == "calculator":
+            elif tool_used == "calculator":
 
-                    st.html(
-                        """
-                        <div class="tool-card">
-
-                            <div class="tool-icon">
-                                🧮
-                            </div>
-
-                            <div>
-
-                                <div class="tool-name">
-                                    Calculator
-                                </div>
-
-                                Working it out...
-
-                            </div>
-
+                st.html(
+                    """
+                    <div class="tool-card">
+                        <div class="tool-icon">🧮</div>
+                        <div>
+                            <div class="tool-name">Calculator</div>
+                            Working it out...
                         </div>
-                        """
-                    )
-
-
-                # ============================================
-                # RUN FUNCTION
-                # ============================================
-
-                tool_result = function(
-                    **arguments
+                        <div class="activity-dot"></div>
+                    </div>
+                    """
                 )
 
-
-                # ============================================
-                # SEND RESULT TO GEMINI
-                # ============================================
-
-                final_interaction = (
-                    client.interactions.create(
-
-                        model="gemini-3.6-flash",
-
-                        previous_interaction_id=
-                            interaction.id,
-
-                        input=[
-
-                            {
-                                "type":
-                                    "function_result",
-
-                                "name":
-                                    function_name,
-
-                                "call_id":
-                                    function_call.id,
-
-                                "result":
-                                    tool_result
-                            }
-
-                        ],
-
-                        tools=[
-                            calculator_tool,
-                            calendar_tool
-                        ]
-                    )
-                )
-
-                response = (
-                    final_interaction.output_text
-                )
-
-            else:
-
-                response = (
-                    "❌ Unknown tool requested."
-                )
-
-        else:
-
-            response = (
-                interaction.output_text
+            response = result.get(
+                "response",
+                "I couldn't generate a response."
             )
 
+            st.markdown(response)
 
     except Exception as e:
 
-        response = (
-            f"❌ Something went wrong: {str(e)}"
-        )
+        response = f"❌ Something went wrong: {str(e)}"
 
+        with st.chat_message("assistant", avatar="🤖"):
+            st.markdown(response)
 
-    # ========================================================
-    # ASSISTANT RESPONSE
-    # ========================================================
-
-    with st.chat_message("assistant"):
-
-        st.markdown(response)
-
-
-    # ========================================================
+    # ------------------------------------------------------------
     # SAVE RESPONSE
-    # ========================================================
+    # ------------------------------------------------------------
 
     st.session_state.messages.append(
         {
