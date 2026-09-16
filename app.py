@@ -31,16 +31,15 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    raise RuntimeError(
-        "GEMINI_API_KEY not found in .env"
-    )
-
+    raise RuntimeError("GEMINI_API_KEY not found in .env")
 
 MODEL = "gemini-3.6-flash"
 
 client = genai.Client(
     api_key=api_key
 )
+
+MAX_AGENT_STEPS = 8
 
 
 # ============================================================
@@ -100,7 +99,7 @@ IMPORTANT RULES:
    - title is required
    - due_date is optional
    - priority can be low, medium, or high
-   - if the user does not specify priority, use medium
+   - if priority is not specified, use medium
    - if the user gives a relative date such as tomorrow,
      resolve it using the current date.
 
@@ -141,11 +140,28 @@ IMPORTANT RULES:
 19. You are an agent, not just a chatbot.
 
 20. Prefer taking action with the available tools when appropriate.
+
+21. You may need to use multiple tools for one user request.
+
+22. If one tool's result is needed before deciding the next action,
+    use the result to continue the task.
+
+23. Continue using tools until the user's request is fully handled.
+
+24. Do not stop after the first successful tool if the request
+    requires additional actions.
+
+25. When completing or deleting a task/reminder by title rather
+    than numeric ID, first list the relevant items, identify the
+    correct ID, then use the appropriate completion/deletion tool.
+
+26. If a tool succeeds but a final AI response cannot be generated,
+    the application will provide a fallback confirmation.
 """
 
 
 # ============================================================
-# CALCULATOR TOOL
+# CALCULATOR
 # ============================================================
 
 def calculator(expression: str):
@@ -172,7 +188,6 @@ def calculator(expression: str):
         }
 
     try:
-
         result = eval(
             expression,
             {"__builtins__": {}},
@@ -185,11 +200,14 @@ def calculator(expression: str):
         }
 
     except Exception:
-
         return {
             "error": "Could not calculate the expression."
         }
 
+
+# ============================================================
+# TOOL SCHEMAS
+# ============================================================
 
 calculator_tool = {
     "type": "function",
@@ -204,15 +222,10 @@ calculator_tool = {
         "properties": {
             "expression": {
                 "type": "string",
-                "description": (
-                    "A mathematical expression such as "
-                    "25 * 4 + 10"
-                )
+                "description": "A mathematical expression such as 25 * 4 + 10"
             }
         },
-        "required": [
-            "expression"
-        ]
+        "required": ["expression"]
     }
 }
 
@@ -234,39 +247,28 @@ calendar_tool = {
     "parameters": {
         "type": "object",
         "properties": {
-
             "title": {
                 "type": "string",
-                "description": (
-                    "Title of the calendar event."
-                )
+                "description": "Title of the calendar event."
             },
-
             "start_time": {
                 "type": "string",
                 "description": (
-                    "Event start time in "
-                    "YYYY-MM-DD HH:MM format."
+                    "Event start time in YYYY-MM-DD HH:MM format."
                 )
             },
-
             "duration_minutes": {
                 "type": "integer",
                 "description": (
-                    "Duration of the event in minutes. "
-                    "Default is 60 minutes."
+                    "Event duration in minutes. "
+                    "Default is 60."
                 )
             },
-
             "description": {
                 "type": "string",
-                "description": (
-                    "Optional description for the event."
-                )
+                "description": "Optional event description."
             }
-
         },
-
         "required": [
             "title",
             "start_time"
@@ -290,14 +292,10 @@ add_task_tool = {
     "parameters": {
         "type": "object",
         "properties": {
-
             "title": {
                 "type": "string",
-                "description": (
-                    "The task title."
-                )
+                "description": "The task title."
             },
-
             "due_date": {
                 "type": "string",
                 "description": (
@@ -305,7 +303,6 @@ add_task_tool = {
                     "YYYY-MM-DD HH:MM format."
                 )
             },
-
             "priority": {
                 "type": "string",
                 "enum": [
@@ -317,12 +314,8 @@ add_task_tool = {
                     "Task priority. Use medium if not specified."
                 )
             }
-
         },
-
-        "required": [
-            "title"
-        ]
+        "required": ["title"]
     }
 }
 
@@ -333,12 +326,12 @@ list_tasks_tool = {
     "description": (
         "Lists the user's saved tasks. "
         "Use this when the user asks to see, show, "
-        "check, or list their tasks."
+        "check, or list their tasks, or when a task "
+        "must be identified by its title."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "include_completed": {
                 "type": "boolean",
                 "description": (
@@ -346,7 +339,6 @@ list_tasks_tool = {
                     "Default is false."
                 )
             }
-
         },
         "required": []
     }
@@ -358,24 +350,17 @@ complete_task_tool = {
     "name": "complete_task",
     "description": (
         "Marks a specific task as completed. "
-        "Use this when the user says they finished "
-        "or completed a task."
+        "Requires the numeric task ID."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "task_id": {
                 "type": "integer",
-                "description": (
-                    "The numeric ID of the task to complete."
-                )
+                "description": "The numeric ID of the task."
             }
-
         },
-        "required": [
-            "task_id"
-        ]
+        "required": ["task_id"]
     }
 }
 
@@ -385,23 +370,17 @@ delete_task_tool = {
     "name": "delete_task",
     "description": (
         "Deletes a specific task. "
-        "Use this when the user asks to remove or delete the task."
+        "Requires the numeric task ID."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "task_id": {
                 "type": "integer",
-                "description": (
-                    "The numeric ID of the task to delete."
-                )
+                "description": "The numeric ID of the task."
             }
-
         },
-        "required": [
-            "task_id"
-        ]
+        "required": ["task_id"]
     }
 }
 
@@ -415,20 +394,16 @@ add_reminder_tool = {
     "name": "add_reminder",
     "description": (
         "Creates a personal reminder for the user. "
-        "Use this when the user asks to remind them about "
-        "something at a specific date or time."
+        "Use this when the user asks to remind them "
+        "about something at a specific date or time."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "title": {
                 "type": "string",
-                "description": (
-                    "The reminder title."
-                )
+                "description": "The reminder title."
             },
-
             "remind_at": {
                 "type": "string",
                 "description": (
@@ -436,7 +411,6 @@ add_reminder_tool = {
                     "YYYY-MM-DD HH:MM format."
                 )
             }
-
         },
         "required": [
             "title",
@@ -452,20 +426,18 @@ list_reminders_tool = {
     "description": (
         "Lists the user's saved reminders. "
         "Use this when the user asks to see, show, "
-        "check, or list their reminders."
+        "check, or list reminders, or when a reminder "
+        "must be identified by its title."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "include_completed": {
                 "type": "boolean",
                 "description": (
-                    "If true, include completed reminders. "
-                    "Default is false."
+                    "If true, include completed reminders."
                 )
             }
-
         },
         "required": []
     }
@@ -476,23 +448,18 @@ complete_reminder_tool = {
     "type": "function",
     "name": "complete_reminder",
     "description": (
-        "Marks a specific reminder as completed or dismissed."
+        "Marks a specific reminder as completed or dismissed. "
+        "Requires the numeric reminder ID."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "reminder_id": {
                 "type": "integer",
-                "description": (
-                    "The numeric ID of the reminder to complete."
-                )
+                "description": "The numeric ID of the reminder."
             }
-
         },
-        "required": [
-            "reminder_id"
-        ]
+        "required": ["reminder_id"]
     }
 }
 
@@ -501,35 +468,28 @@ delete_reminder_tool = {
     "type": "function",
     "name": "delete_reminder",
     "description": (
-        "Deletes a specific reminder."
+        "Deletes a specific reminder. "
+        "Requires the numeric reminder ID."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-
             "reminder_id": {
                 "type": "integer",
-                "description": (
-                    "The numeric ID of the reminder to delete."
-                )
+                "description": "The numeric ID of the reminder."
             }
-
         },
-        "required": [
-            "reminder_id"
-        ]
+        "required": ["reminder_id"]
     }
 }
 
 
 # ============================================================
-# ALL AVAILABLE FUNCTIONS
+# AVAILABLE FUNCTIONS
 # ============================================================
 
 available_functions = {
-
     "calculator": calculator,
-
     "create_calendar_event": create_calendar_event,
 
     "add_task": add_task,
@@ -549,7 +509,6 @@ available_functions = {
 # ============================================================
 
 all_tools = [
-
     calculator_tool,
     calendar_tool,
 
@@ -574,9 +533,7 @@ def execute_tool(function_name, arguments):
     Executes a tool requested by Gemini.
     """
 
-    function = available_functions.get(
-        function_name
-    )
+    function = available_functions.get(function_name)
 
     if not function:
         return {
@@ -584,6 +541,8 @@ def execute_tool(function_name, arguments):
         }
 
     try:
+        if arguments is None:
+            arguments = {}
 
         if isinstance(arguments, str):
             arguments = json.loads(arguments)
@@ -591,10 +550,184 @@ def execute_tool(function_name, arguments):
         return function(**arguments)
 
     except Exception as e:
-
         return {
             "error": str(e)
         }
+
+
+# ============================================================
+# FALLBACK RESPONSE BUILDER
+# ============================================================
+
+def build_fallback_response(tool_results):
+    """
+    Creates a local response when Gemini cannot generate
+    the final natural-language response.
+
+    This does NOT invent success.
+    It only reports actual tool results.
+    """
+
+    if not tool_results:
+        return (
+            "I couldn't generate a response right now. "
+            "Please try again."
+        )
+
+    successful = []
+    failed = []
+
+    for item in tool_results:
+        name = item.get("name")
+        result = item.get("result")
+
+        if isinstance(result, dict) and result.get("error"):
+            failed.append(
+                f"{name}: {result.get('error')}"
+            )
+        else:
+            successful.append(
+                (name, result)
+            )
+
+    messages = []
+
+    for name, result in successful:
+
+        if name == "calculator":
+            if isinstance(result, dict):
+                expression = result.get("expression")
+                value = result.get("result")
+
+                if expression is not None and value is not None:
+                    messages.append(
+                        f"Calculated `{expression}` = **{value}**."
+                    )
+                else:
+                    messages.append(
+                        "The calculation was completed."
+                    )
+
+        elif name == "create_calendar_event":
+            title = ""
+
+            if isinstance(result, dict):
+                title = (
+                    result.get("title")
+                    or result.get("summary")
+                    or ""
+                )
+
+            if title:
+                messages.append(
+                    f'Calendar event **"{title}"** was created successfully.'
+                )
+            else:
+                messages.append(
+                    "The calendar event was created successfully."
+                )
+
+        elif name == "add_task":
+            title = ""
+
+            if isinstance(result, dict):
+                title = result.get("title", "")
+
+            if title:
+                messages.append(
+                    f'Task **"{title}"** was added successfully.'
+                )
+            else:
+                messages.append(
+                    "The task was added successfully."
+                )
+
+        elif name == "list_tasks":
+            if isinstance(result, list):
+                count = len(result)
+
+                if count == 0:
+                    messages.append(
+                        "You currently have no pending tasks."
+                    )
+                else:
+                    messages.append(
+                        f"I found **{count}** task(s)."
+                    )
+            else:
+                messages.append(
+                    "Your tasks were retrieved successfully."
+                )
+
+        elif name == "complete_task":
+            messages.append(
+                "The task was marked as completed successfully."
+            )
+
+        elif name == "delete_task":
+            messages.append(
+                "The task was deleted successfully."
+            )
+
+        elif name == "add_reminder":
+            title = ""
+
+            if isinstance(result, dict):
+                title = result.get("title", "")
+
+            if title:
+                messages.append(
+                    f'Reminder **"{title}"** was set successfully.'
+                )
+            else:
+                messages.append(
+                    "The reminder was set successfully."
+                )
+
+        elif name == "list_reminders":
+            if isinstance(result, list):
+                count = len(result)
+
+                if count == 0:
+                    messages.append(
+                        "You currently have no pending reminders."
+                    )
+                else:
+                    messages.append(
+                        f"I found **{count}** reminder(s)."
+                    )
+            else:
+                messages.append(
+                    "Your reminders were retrieved successfully."
+                )
+
+        elif name == "complete_reminder":
+            messages.append(
+                "The reminder was dismissed successfully."
+            )
+
+        elif name == "delete_reminder":
+            messages.append(
+                "The reminder was deleted successfully."
+            )
+
+        else:
+            messages.append(
+                f"The {name} tool completed successfully."
+            )
+
+    for error in failed:
+        messages.append(
+            f"⚠️ {error}"
+        )
+
+    if messages:
+        return "\n\n".join(messages)
+
+    return (
+        "The requested action was processed, "
+        "but I couldn't generate the final response."
+    )
 
 
 # ============================================================
@@ -605,14 +738,24 @@ def run_agent(user_input: str):
     """
     Main Swas Agent engine.
 
-    Takes user input and returns the final AI response.
+    Supports:
+    - normal AI responses
+    - single tool calls
+    - multiple tool calls
+    - sequential tool calls
+    - tool-result based decisions
+    - fallback responses when final Gemini generation fails
     """
 
     if not user_input or not user_input.strip():
         return {
             "response": "Tell me what you need help with.",
             "tool_used": None,
-            "tool_result": None
+            "tool_result": None,
+            "tool": None,
+            "tool_args": None,
+            "tools_used": [],
+            "tool_results": [],
         }
 
     # --------------------------------------------------------
@@ -634,77 +777,222 @@ User request:
 """
 
     # --------------------------------------------------------
+    # TRACKING
+    # --------------------------------------------------------
+
+    tools_used = []
+    tool_results = []
+
+    last_tool_used = None
+    last_tool_args = None
+
+    # --------------------------------------------------------
     # FIRST GEMINI INTERACTION
     # --------------------------------------------------------
 
-    interaction = client.interactions.create(
-        model=MODEL,
-        input=input_with_context,
-        tools=all_tools
-    )
+    try:
+        interaction = client.interactions.create(
+            model=MODEL,
+            input=input_with_context,
+            tools=all_tools
+        )
 
-    # --------------------------------------------------------
-    # FIND FUNCTION CALL
-    # --------------------------------------------------------
+    except Exception as e:
+        error_text = str(e).lower()
 
-    function_call = None
-
-    for step in interaction.steps:
-
-        if step.type == "function_call":
-            function_call = step
-            break
-
-    # --------------------------------------------------------
-    # NO TOOL REQUIRED
-    # --------------------------------------------------------
-
-    if not function_call:
+        if (
+            "quota" in error_text
+            or "429" in error_text
+            or "resource exhausted" in error_text
+        ):
+            return {
+                "response": (
+                    "I'm temporarily unable to contact Gemini "
+                    "because the API quota is exhausted. "
+                    "Please try again later."
+                ),
+                "tool_used": None,
+                "tool_result": None,
+                "tool": None,
+                "tool_args": None,
+                "tools_used": [],
+                "tool_results": [],
+            }
 
         return {
-            "response": interaction.output_text,
+            "response": (
+                "I couldn't connect to the AI service right now. "
+                "Please try again."
+            ),
             "tool_used": None,
-            "tool_result": None
+            "tool_result": None,
+            "tool": None,
+            "tool_args": None,
+            "tools_used": [],
+            "tool_results": [],
         }
 
-    # --------------------------------------------------------
-    # TOOL EXECUTION
-    # --------------------------------------------------------
+    # ========================================================
+    # AGENT LOOP
+    # ========================================================
 
-    function_name = function_call.name
-    arguments = function_call.arguments
+    for step_number in range(MAX_AGENT_STEPS):
 
-    tool_result = execute_tool(
-        function_name,
-        arguments
-    )
+        # ----------------------------------------------------
+        # FIND ALL FUNCTION CALLS IN CURRENT INTERACTION
+        # ----------------------------------------------------
 
-    # --------------------------------------------------------
-    # SEND TOOL RESULT BACK TO GEMINI
-    # --------------------------------------------------------
+        function_calls = []
 
-    final_interaction = client.interactions.create(
-        model=MODEL,
-        previous_interaction_id=interaction.id,
-        input=[
-            {
+        for step in interaction.steps:
+
+            if step.type == "function_call":
+                function_calls.append(step)
+
+        # ----------------------------------------------------
+        # NO MORE TOOLS
+        # ----------------------------------------------------
+
+        if not function_calls:
+
+            final_text = getattr(
+                interaction,
+                "output_text",
+                None
+            )
+
+            if final_text and final_text.strip():
+
+                return {
+                    "response": final_text,
+                    "tool_used": last_tool_used,
+                    "tool_result": (
+                        tool_results[-1]["result"]
+                        if tool_results
+                        else None
+                    ),
+                    "tool": last_tool_used,
+                    "tool_args": last_tool_args,
+                    "tools_used": tools_used,
+                    "tool_results": tool_results,
+                }
+
+            # Gemini gave no final text.
+            # Use local fallback based on actual tool results.
+
+            fallback = build_fallback_response(
+                tool_results
+            )
+
+            return {
+                "response": fallback,
+                "tool_used": last_tool_used,
+                "tool_result": (
+                    tool_results[-1]["result"]
+                    if tool_results
+                    else None
+                ),
+                "tool": last_tool_used,
+                "tool_args": last_tool_args,
+                "tools_used": tools_used,
+                "tool_results": tool_results,
+            }
+
+        # ----------------------------------------------------
+        # EXECUTE ALL CURRENT FUNCTION CALLS
+        # ----------------------------------------------------
+
+        function_results = []
+
+        for function_call in function_calls:
+
+            function_name = function_call.name
+            arguments = function_call.arguments
+
+            last_tool_used = function_name
+            last_tool_args = arguments
+
+            result = execute_tool(
+                function_name,
+                arguments
+            )
+
+            tools_used.append(function_name)
+
+            tool_results.append({
+                "name": function_name,
+                "arguments": arguments,
+                "result": result,
+                "step": step_number + 1,
+            })
+
+            function_results.append({
                 "type": "function_result",
                 "name": function_name,
                 "call_id": function_call.id,
-                "result": tool_result
+                "result": result,
+            })
+
+        # ----------------------------------------------------
+        # ASK GEMINI WHAT TO DO NEXT
+        # ----------------------------------------------------
+
+        try:
+            interaction = client.interactions.create(
+                model=MODEL,
+                previous_interaction_id=interaction.id,
+                input=function_results,
+                tools=all_tools
+            )
+
+        except Exception:
+            # Important:
+            # Tools already executed successfully.
+            # Do NOT lose their results just because the
+            # final Gemini call failed.
+
+            fallback = build_fallback_response(
+                tool_results
+            )
+
+            return {
+                "response": fallback,
+                "tool_used": last_tool_used,
+                "tool_result": (
+                    tool_results[-1]["result"]
+                    if tool_results
+                    else None
+                ),
+                "tool": last_tool_used,
+                "tool_args": last_tool_args,
+                "tools_used": tools_used,
+                "tool_results": tool_results,
             }
-        ],
-        tools=all_tools
+
+    # ========================================================
+    # MAX STEPS REACHED
+    # ========================================================
+
+    fallback = build_fallback_response(
+        tool_results
     )
 
-    # --------------------------------------------------------
-    # FINAL RESPONSE
-    # --------------------------------------------------------
-
     return {
-        "response": final_interaction.output_text,
-        "tool_used": function_name,
-        "tool_result": tool_result
+        "response": (
+            fallback
+            + "\n\nI stopped after reaching the maximum "
+              "agent steps for this request."
+        ),
+        "tool_used": last_tool_used,
+        "tool_result": (
+            tool_results[-1]["result"]
+            if tool_results
+            else None
+        ),
+        "tool": last_tool_used,
+        "tool_args": last_tool_args,
+        "tools_used": tools_used,
+        "tool_results": tool_results,
     }
 
 
@@ -726,6 +1014,7 @@ def run_cli():
     print("📅 Google Calendar tool enabled")
     print("✅ Task Manager enabled")
     print("🔔 Reminder Manager enabled")
+    print("🧠 Multi-tool Agent Loop enabled")
     print()
 
     print("Type 'exit' to stop.")
@@ -736,11 +1025,7 @@ def run_cli():
         user_input = input("You: ")
 
         if user_input.lower().strip() == "exit":
-
-            print(
-                "🤖 Agent: Goodbye bhai! 👋"
-            )
-
+            print("🤖 Agent: Goodbye bhai! 👋")
             break
 
         if not user_input.strip():
@@ -752,11 +1037,10 @@ def run_cli():
                 user_input
             )
 
-            if result["tool_used"]:
-
+            if result["tools_used"]:
                 print(
-                    f"🔧 Tool used: "
-                    f"{result['tool_used']}"
+                    "🔧 Tools used:",
+                    ", ".join(result["tools_used"])
                 )
 
             print(

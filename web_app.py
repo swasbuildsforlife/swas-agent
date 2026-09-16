@@ -1,5 +1,4 @@
 import html
-
 import streamlit as st
 
 from app import run_agent
@@ -385,6 +384,7 @@ st.html(
         color: #94a3b8;
         font-size: 12px;
         margin-top: 5px;
+        line-height: 1.7;
     }
 
 
@@ -494,17 +494,28 @@ st.html(
 quick_col1, quick_col2, quick_col3 = st.columns(3)
 
 with quick_col1:
-    if st.button("💬  Ask anything", use_container_width=True):
-        st.session_state.quick_prompt = "What can you help me with?"
+    if st.button(
+        "💬  Ask anything",
+        use_container_width=True
+    ):
+        st.session_state.quick_prompt = (
+            "What can you help me with?"
+        )
 
 with quick_col2:
-    if st.button("📅  Schedule something", use_container_width=True):
+    if st.button(
+        "📅  Schedule something",
+        use_container_width=True
+    ):
         st.session_state.quick_prompt = (
             "Help me schedule something on my Google Calendar."
         )
 
 with quick_col3:
-    if st.button("🧮  Calculate", use_container_width=True):
+    if st.button(
+        "🧮  Calculate",
+        use_container_width=True
+    ):
         st.session_state.quick_prompt = (
             "Calculate 4589 * 27 + 156"
         )
@@ -515,13 +526,17 @@ with quick_col3:
 # ============================================================
 
 pending_tasks = list_tasks()
-completed_tasks = list_tasks(include_completed=True)
+
+completed_tasks = list_tasks(
+    include_completed=True
+)
 
 completed_tasks = [
     task
     for task in completed_tasks
     if task.get("completed")
 ]
+
 
 if pending_tasks or completed_tasks:
 
@@ -532,7 +547,10 @@ if pending_tasks or completed_tasks:
             <div class="panel-header">
 
                 <div>
-                    <div class="panel-title">My Tasks</div>
+                    <div class="panel-title">
+                        My Tasks
+                    </div>
+
                     <div class="panel-subtitle">
                         Things you want Swas Agent to keep track of
                     </div>
@@ -543,23 +561,34 @@ if pending_tasks or completed_tasks:
                 </div>
 
             </div>
-
         """
     )
 
     # Pending tasks
+
     for task in pending_tasks:
 
-        title = html.escape(str(task.get("title", "Untitled task")))
+        title = html.escape(
+            str(task.get("title", "Untitled task"))
+        )
+
         task_id = task.get("id")
-        due_date = html.escape(str(task.get("due_date") or "No due date"))
-        priority = str(task.get("priority", "medium")).lower()
+
+        due_date = html.escape(
+            str(task.get("due_date") or "No due date")
+        )
+
+        priority = str(
+            task.get("priority", "medium")
+        ).lower()
 
         st.html(
             f"""
             <div class="item-card">
 
-                <div class="item-icon">✓</div>
+                <div class="item-icon">
+                    ✓
+                </div>
 
                 <div class="item-content">
 
@@ -585,24 +614,32 @@ if pending_tasks or completed_tasks:
         task_col1, task_col2 = st.columns([1, 1])
 
         with task_col1:
+
             if st.button(
                 "✓ Complete",
                 key=f"complete_task_{task_id}",
                 use_container_width=True,
             ):
+
                 complete_task(task_id)
+
                 st.rerun()
 
         with task_col2:
+
             if st.button(
                 "Delete",
                 key=f"delete_task_{task_id}",
                 use_container_width=True,
             ):
+
                 delete_task(task_id)
+
                 st.rerun()
 
+
     # Completed tasks
+
     if completed_tasks:
 
         with st.expander(
@@ -612,11 +649,20 @@ if pending_tasks or completed_tasks:
             for task in completed_tasks:
 
                 title = html.escape(
-                    str(task.get("title", "Untitled task"))
+                    str(
+                        task.get(
+                            "title",
+                            "Untitled task"
+                        )
+                    )
                 )
 
                 due_date = html.escape(
-                    str(task.get("due_date") or "No due date")
+                    str(
+                        task.get(
+                            "due_date"
+                        ) or "No due date"
+                    )
                 )
 
                 task_id = task.get("id")
@@ -625,7 +671,9 @@ if pending_tasks or completed_tasks:
                     f"""
                     <div class="item-card completed-item">
 
-                        <div class="item-icon">✓</div>
+                        <div class="item-icon">
+                            ✓
+                        </div>
 
                         <div class="item-content">
 
@@ -648,7 +696,9 @@ if pending_tasks or completed_tasks:
                     key=f"delete_completed_task_{task_id}",
                     use_container_width=True,
                 ):
+
                     delete_task(task_id)
+
                     st.rerun()
 
     st.html("</div>")
@@ -680,10 +730,15 @@ if pending_reminders or completed_reminders:
             <div class="panel-header">
 
                 <div>
-                    <div class="panel-title">My Reminders</div>
+
+                    <div class="panel-title">
+                        My Reminders
+                    </div>
+
                     <div class="panel-subtitle">
                         Swas Agent will keep your reminders organized
                     </div>
+
                 </div>
 
                 <div class="count-badge">
@@ -691,28 +746,41 @@ if pending_reminders or completed_reminders:
                 </div>
 
             </div>
-
         """
     )
 
+
     # Pending reminders
+
     for reminder in pending_reminders:
 
         reminder_id = reminder.get("id")
 
         title = html.escape(
-            str(reminder.get("title", "Untitled reminder"))
+            str(
+                reminder.get(
+                    "title",
+                    "Untitled reminder"
+                )
+            )
         )
 
         remind_at = html.escape(
-            str(reminder.get("remind_at", "No time"))
+            str(
+                reminder.get(
+                    "remind_at",
+                    "No time"
+                )
+            )
         )
 
         st.html(
             f"""
             <div class="item-card">
 
-                <div class="item-icon">⏰</div>
+                <div class="item-icon">
+                    ⏰
+                </div>
 
                 <div class="item-content">
 
@@ -733,24 +801,32 @@ if pending_reminders or completed_reminders:
         reminder_col1, reminder_col2 = st.columns([1, 1])
 
         with reminder_col1:
+
             if st.button(
                 "✓ Dismiss",
                 key=f"complete_reminder_{reminder_id}",
                 use_container_width=True,
             ):
+
                 complete_reminder(reminder_id)
+
                 st.rerun()
 
         with reminder_col2:
+
             if st.button(
                 "Delete",
                 key=f"delete_reminder_{reminder_id}",
                 use_container_width=True,
             ):
+
                 delete_reminder(reminder_id)
+
                 st.rerun()
 
+
     # Completed reminders
+
     if completed_reminders:
 
         with st.expander(
@@ -762,18 +838,30 @@ if pending_reminders or completed_reminders:
                 reminder_id = reminder.get("id")
 
                 title = html.escape(
-                    str(reminder.get("title", "Untitled reminder"))
+                    str(
+                        reminder.get(
+                            "title",
+                            "Untitled reminder"
+                        )
+                    )
                 )
 
                 remind_at = html.escape(
-                    str(reminder.get("remind_at", "No time"))
+                    str(
+                        reminder.get(
+                            "remind_at",
+                            "No time"
+                        )
+                    )
                 )
 
                 st.html(
                     f"""
                     <div class="item-card completed-item">
 
-                        <div class="item-icon">✓</div>
+                        <div class="item-icon">
+                            ✓
+                        </div>
 
                         <div class="item-content">
 
@@ -796,7 +884,9 @@ if pending_reminders or completed_reminders:
                     key=f"delete_completed_reminder_{reminder_id}",
                     use_container_width=True,
                 ):
+
                     delete_reminder(reminder_id)
+
                     st.rerun()
 
     st.html("</div>")
@@ -817,7 +907,10 @@ st.html(
 
 for message in st.session_state.messages:
 
-    role = message.get("role", "assistant")
+    role = message.get(
+        "role",
+        "assistant"
+    )
 
     avatar = (
         "🤖"
@@ -829,8 +922,12 @@ for message in st.session_state.messages:
         role,
         avatar=avatar,
     ):
+
         st.markdown(
-            message.get("content", "")
+            message.get(
+                "content",
+                ""
+            )
         )
 
 
@@ -843,13 +940,17 @@ prompt = st.chat_input(
 )
 
 
-# Quick prompt support
+# ============================================================
+# QUICK PROMPT SUPPORT
+# ============================================================
+
 if (
     "quick_prompt" in st.session_state
     and st.session_state.quick_prompt
 ):
 
     prompt = st.session_state.quick_prompt
+
     st.session_state.quick_prompt = None
 
 
@@ -859,7 +960,10 @@ if (
 
 if prompt:
 
-    # User message
+    # --------------------------------------------------------
+    # SAVE USER MESSAGE
+    # --------------------------------------------------------
+
     st.session_state.messages.append(
         {
             "role": "user",
@@ -867,16 +971,22 @@ if prompt:
         }
     )
 
+
     with st.chat_message(
         "user",
         avatar="👤",
     ):
+
         st.markdown(prompt)
 
 
     response = None
+
     tool_used = None
     tool_args = None
+
+    tools_used = []
+    tool_results = []
 
 
     # --------------------------------------------------------
@@ -888,13 +998,19 @@ if prompt:
         avatar="🤖",
     ):
 
-        with st.spinner("Swas is thinking..."):
+        with st.spinner(
+            "Swas is thinking..."
+        ):
 
             try:
 
                 result = run_agent(prompt)
 
-                # Support normal dictionary response
+
+                # ------------------------------------------------
+                # DICTIONARY RESULT
+                # ------------------------------------------------
+
                 if isinstance(result, dict):
 
                     response = result.get(
@@ -909,10 +1025,29 @@ if prompt:
                         "tool_args"
                     )
 
-                # Support plain string response
+                    tools_used = result.get(
+                        "tools_used",
+                        []
+                    ) or []
+
+                    tool_results = result.get(
+                        "tool_results",
+                        []
+                    ) or []
+
+
+                # ------------------------------------------------
+                # STRING RESULT
+                # ------------------------------------------------
+
                 elif isinstance(result, str):
 
                     response = result
+
+
+                # ------------------------------------------------
+                # OTHER RESULT
+                # ------------------------------------------------
 
                 else:
 
@@ -923,6 +1058,11 @@ if prompt:
 
                 error_text = str(error)
 
+
+                # --------------------------------------------
+                # GEMINI QUOTA
+                # --------------------------------------------
+
                 if (
                     "429" in error_text
                     or "quota" in error_text.lower()
@@ -932,22 +1072,123 @@ if prompt:
 
                     response = (
                         "⚠️ Gemini's current request limit "
-                        "has been reached. Your local tools "
-                        "are still safe and working. Please "
-                        "wait a little and try again."
+                        "has been reached.\n\n"
+                        "Your local tools are still safe "
+                        "and working. Please wait a little "
+                        "and try again."
                     )
+
+
+                # --------------------------------------------
+                # OTHER ERROR
+                # --------------------------------------------
 
                 else:
 
                     response = (
-                        f"❌ Something went wrong: "
+                        f"❌ Something went wrong:\n\n"
                         f"{error_text}"
                     )
 
 
-        # ----------------------------------------------------
-        # FALLBACK
-        # ----------------------------------------------------
+        # ====================================================
+        # TOOL RESULT FALLBACK
+        # ====================================================
+
+        if not response:
+
+            successful = []
+            failed = []
+
+
+            for item in tool_results:
+
+                if not isinstance(item, dict):
+                    continue
+
+
+                tool_name = (
+                    item.get("tool")
+                    or item.get("name")
+                    or "tool"
+                )
+
+
+                result_text = (
+                    item.get("result")
+                )
+
+
+                if result_text is None:
+
+                    result_text = (
+                        item.get("output")
+                    )
+
+
+                if result_text is None:
+
+                    result_text = ""
+
+
+                result_text = str(
+                    result_text
+                )
+
+
+                if (
+                    "error"
+                    in result_text.lower()
+                    or
+                    "failed"
+                    in result_text.lower()
+                ):
+
+                    failed.append(
+                        f"{tool_name}: {result_text}"
+                    )
+
+                else:
+
+                    successful.append(
+                        f"{tool_name}: {result_text}"
+                    )
+
+
+            if successful and not failed:
+
+                response = (
+                    "Done — the requested action "
+                    "was completed.\n\n"
+                    + "\n".join(successful)
+                )
+
+
+            elif successful and failed:
+
+                response = (
+                    "The request was partially "
+                    "completed.\n\n"
+                    "**Completed:**\n"
+                    + "\n".join(successful)
+                    + "\n\n"
+                    "**Issues:**\n"
+                    + "\n".join(failed)
+                )
+
+
+            elif failed:
+
+                response = (
+                    "I couldn't complete the "
+                    "requested action.\n\n"
+                    + "\n".join(failed)
+                )
+
+
+        # ====================================================
+        # FINAL FALLBACK
+        # ====================================================
 
         if not response:
 
@@ -956,16 +1197,16 @@ if prompt:
             )
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # SHOW RESPONSE
-        # ----------------------------------------------------
+        # ====================================================
 
         st.markdown(response)
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # TOOL ACTIVITY
-        # ----------------------------------------------------
+        # ====================================================
 
         activity_map = {
 
@@ -1018,26 +1259,70 @@ if prompt:
                 "🗑 Reminder Manager",
                 "Swas deleted a reminder."
             ),
-
         }
 
 
-        if tool_used in activity_map:
+        # ----------------------------------------------------
+        # SUPPORT MULTIPLE TOOLS
+        # ----------------------------------------------------
 
-            activity_title, activity_text = (
-                activity_map[tool_used]
-            )
+        activity_names = tools_used or (
+            [tool_used]
+            if tool_used
+            else []
+        )
+
+
+        shown_tools = []
+
+
+        for name in activity_names:
+
+            if (
+                name in activity_map
+                and name not in shown_tools
+            ):
+
+                shown_tools.append(name)
+
+
+        if shown_tools:
+
+            activity_lines = []
+
+
+            for name in shown_tools:
+
+                activity_title, activity_text = (
+                    activity_map[name]
+                )
+
+
+                activity_lines.append(
+                    f"""
+                    <div>
+                        <strong>
+                            {html.escape(activity_title)}
+                        </strong>
+                        <br>
+                        {html.escape(activity_text)}
+                    </div>
+                    """
+                )
+
 
             st.html(
                 f"""
                 <div class="activity">
 
                     <div class="activity-title">
-                        {html.escape(activity_title)}
+                        Swas activity
                     </div>
 
                     <div class="activity-text">
-                        {html.escape(activity_text)}
+
+                        {"<br><br>".join(activity_lines)}
+
                     </div>
 
                 </div>
@@ -1067,4 +1352,4 @@ st.html(
         SWAS AGENT • PERSONAL AI • BUILT BY SWASTIK
     </div>
     """
-) 
+)
