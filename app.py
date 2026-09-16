@@ -6,11 +6,19 @@ from dotenv import load_dotenv
 from google import genai
 
 from calendar_tools import create_calendar_event
+
 from tools.tasks import (
     add_task,
     list_tasks,
     complete_task,
     delete_task,
+)
+
+from tools.reminders import (
+    add_reminder,
+    list_reminders,
+    complete_reminder,
+    delete_reminder,
 )
 
 
@@ -48,6 +56,7 @@ You have access to tools for:
 - calculations
 - Google Calendar
 - personal tasks
+- personal reminders
 
 CURRENT DATE:
 Use the actual current date and time provided by the application.
@@ -95,16 +104,43 @@ IMPORTANT RULES:
    - if the user gives a relative date such as tomorrow,
      resolve it using the current date.
 
-10. Never invent that a task or calendar event was created.
+10. If the user asks to create or set a reminder,
+    use the add_reminder tool.
+
+11. If the user asks:
+    - what reminders do I have?
+    - show my reminders
+    - list my reminders
+    - pending reminders
+    use the list_reminders tool.
+
+12. If the user asks to complete, finish, or dismiss a reminder,
+    use the complete_reminder tool.
+
+13. If the user asks to delete or remove a reminder,
+    use the delete_reminder tool.
+
+14. When creating a reminder:
+    - title is required
+    - remind_at is required
+    - remind_at must use YYYY-MM-DD HH:MM format
+    - if the user says tomorrow, today, tonight, etc.,
+      resolve it using the current date and time.
+
+15. Tasks and reminders are different:
+    - A task is something the user needs to do.
+    - A reminder is something the user wants to be reminded about.
+
+16. Never invent that a task, reminder, or calendar event was created.
     Only say it was created if the tool actually succeeds.
 
-11. After a tool is executed, explain the result naturally.
+17. After a tool is executed, explain the result naturally.
 
-12. If no tool is required, answer normally.
+18. If no tool is required, answer normally.
 
-13. You are an agent, not just a chatbot.
+19. You are an agent, not just a chatbot.
 
-14. Prefer taking action with the available tools when appropriate.
+20. Prefer taking action with the available tools when appropriate.
 """
 
 
@@ -349,7 +385,7 @@ delete_task_tool = {
     "name": "delete_task",
     "description": (
         "Deletes a specific task. "
-        "Use this when the user asks to remove or delete a task."
+        "Use this when the user asks to remove or delete the task."
     ),
     "parameters": {
         "type": "object",
@@ -371,10 +407,127 @@ delete_task_tool = {
 
 
 # ============================================================
+# REMINDER TOOLS
+# ============================================================
+
+add_reminder_tool = {
+    "type": "function",
+    "name": "add_reminder",
+    "description": (
+        "Creates a personal reminder for the user. "
+        "Use this when the user asks to remind them about "
+        "something at a specific date or time."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+
+            "title": {
+                "type": "string",
+                "description": (
+                    "The reminder title."
+                )
+            },
+
+            "remind_at": {
+                "type": "string",
+                "description": (
+                    "Reminder date and time in "
+                    "YYYY-MM-DD HH:MM format."
+                )
+            }
+
+        },
+        "required": [
+            "title",
+            "remind_at"
+        ]
+    }
+}
+
+
+list_reminders_tool = {
+    "type": "function",
+    "name": "list_reminders",
+    "description": (
+        "Lists the user's saved reminders. "
+        "Use this when the user asks to see, show, "
+        "check, or list their reminders."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+
+            "include_completed": {
+                "type": "boolean",
+                "description": (
+                    "If true, include completed reminders. "
+                    "Default is false."
+                )
+            }
+
+        },
+        "required": []
+    }
+}
+
+
+complete_reminder_tool = {
+    "type": "function",
+    "name": "complete_reminder",
+    "description": (
+        "Marks a specific reminder as completed or dismissed."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+
+            "reminder_id": {
+                "type": "integer",
+                "description": (
+                    "The numeric ID of the reminder to complete."
+                )
+            }
+
+        },
+        "required": [
+            "reminder_id"
+        ]
+    }
+}
+
+
+delete_reminder_tool = {
+    "type": "function",
+    "name": "delete_reminder",
+    "description": (
+        "Deletes a specific reminder."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+
+            "reminder_id": {
+                "type": "integer",
+                "description": (
+                    "The numeric ID of the reminder to delete."
+                )
+            }
+
+        },
+        "required": [
+            "reminder_id"
+        ]
+    }
+}
+
+
+# ============================================================
 # ALL AVAILABLE FUNCTIONS
 # ============================================================
 
 available_functions = {
+
     "calculator": calculator,
 
     "create_calendar_event": create_calendar_event,
@@ -383,6 +536,11 @@ available_functions = {
     "list_tasks": list_tasks,
     "complete_task": complete_task,
     "delete_task": delete_task,
+
+    "add_reminder": add_reminder,
+    "list_reminders": list_reminders,
+    "complete_reminder": complete_reminder,
+    "delete_reminder": delete_reminder,
 }
 
 
@@ -391,12 +549,19 @@ available_functions = {
 # ============================================================
 
 all_tools = [
+
     calculator_tool,
     calendar_tool,
+
     add_task_tool,
     list_tasks_tool,
     complete_task_tool,
     delete_task_tool,
+
+    add_reminder_tool,
+    list_reminders_tool,
+    complete_reminder_tool,
+    delete_reminder_tool,
 ]
 
 
@@ -441,12 +606,6 @@ def run_agent(user_input: str):
     Main Swas Agent engine.
 
     Takes user input and returns the final AI response.
-
-    This function can be used by:
-        - web_app.py
-        - CLI
-        - future mobile app
-        - future API
     """
 
     if not user_input or not user_input.strip():
@@ -566,6 +725,7 @@ def run_cli():
     print("🧮 Calculator tool enabled")
     print("📅 Google Calendar tool enabled")
     print("✅ Task Manager enabled")
+    print("🔔 Reminder Manager enabled")
     print()
 
     print("Type 'exit' to stop.")

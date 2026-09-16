@@ -3,3 +3,4 @@ venv/
 __pycache__/
 calendar_token.pkl
 tasks.json
+reminders.json
