@@ -819,11 +819,11 @@ User request:
                 "tool_results": [],
             }
 
+        # TEMPORARY CLOUD DIAGNOSTIC:
+        # Show the actual Gemini exception so we can identify
+        # why the deployed Streamlit app is failing.
         return {
-            "response": (
-                "I couldn't connect to the AI service right now. "
-                "Please try again."
-            ),
+            "response": f"Cloud Gemini error: {str(e)}",
             "tool_used": None,
             "tool_result": None,
             "tool": None,
@@ -876,9 +876,6 @@ User request:
                     "tools_used": tools_used,
                     "tool_results": tool_results,
                 }
-
-            # Gemini gave no final text.
-            # Use local fallback based on actual tool results.
 
             fallback = build_fallback_response(
                 tool_results
@@ -946,10 +943,6 @@ User request:
             )
 
         except Exception:
-            # Important:
-            # Tools already executed successfully.
-            # Do NOT lose their results just because the
-            # final Gemini call failed.
 
             fallback = build_fallback_response(
                 tool_results
