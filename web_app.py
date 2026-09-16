@@ -1,4 +1,5 @@
 import html
+
 import streamlit as st
 
 from app import run_agent
@@ -29,31 +30,53 @@ st.set_page_config(
 
 
 # ============================================================
-# PREMIUM DARK UI
+# PREMIUM CRIMSON × VIOLET UI
 # ============================================================
 
 st.html(
     """
     <style>
 
-    /* =========================
+    /* ========================================================
+       COLOR SYSTEM
+       ======================================================== */
+
+    :root {
+        --black: #070609;
+        --plum: #160B18;
+        --crimson-violet: #7F1D5A;
+        --red: #E11D48;
+        --violet: #A855F7;
+        --text: #F5F5F5;
+        --muted: #817985;
+        --soft: #B8AFBA;
+    }
+
+
+    /* ========================================================
        GLOBAL
-    ========================= */
+       ======================================================== */
 
     .stApp {
         background:
             radial-gradient(
-                circle at 20% 10%,
-                rgba(79, 70, 229, 0.12),
-                transparent 30%
+                circle at 50% -10%,
+                rgba(168, 85, 247, 0.12),
+                transparent 35%
             ),
             radial-gradient(
-                circle at 85% 20%,
-                rgba(34, 197, 94, 0.07),
+                circle at 5% 25%,
+                rgba(127, 29, 90, 0.14),
+                transparent 28%
+            ),
+            radial-gradient(
+                circle at 95% 75%,
+                rgba(225, 29, 72, 0.05),
                 transparent 25%
             ),
-            #020617;
-        color: #f8fafc;
+            #070609;
+
+        color: #F5F5F5;
     }
 
     header[data-testid="stHeader"] {
@@ -70,223 +93,351 @@ st.html(
 
     .block-container {
         max-width: 1180px;
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
+        padding-top: 1.25rem;
+        padding-bottom: 2.5rem;
     }
 
 
-    /* =========================
+    /* ========================================================
        TOP BAR
-    ========================= */
+       ======================================================== */
 
     .topbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 4px 22px 4px;
+
+        padding: 8px 3px 18px 3px;
     }
 
     .brand {
         display: flex;
         align-items: center;
-        gap: 11px;
+        gap: 12px;
     }
 
     .brand-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
+        border-radius: 13px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #A855F7 0%,
+                #7F1D5A 58%,
+                #E11D48 100%
+            );
+
+        color: #FFFFFF;
+
         font-size: 20px;
-        font-weight: 700;
-        background: linear-gradient(
-            135deg,
-            #6366f1,
-            #4f46e5
-        );
+        font-weight: 800;
+
         box-shadow:
-            0 8px 25px rgba(79, 70, 229, 0.35);
+            0 8px 30px rgba(168, 85, 247, 0.22),
+            0 0 0 1px rgba(168, 85, 247, 0.15);
     }
 
     .brand-title {
+        color: #F5F5F5;
+
         font-size: 18px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: #f8fafc;
+        font-weight: 750;
+
+        letter-spacing: -0.4px;
+        line-height: 1.1;
     }
 
     .brand-subtitle {
-        font-size: 10px;
-        color: #64748b;
-        letter-spacing: 1.5px;
-        margin-top: 1px;
+        margin-top: 4px;
+
+        color: #756D78;
+
+        font-size: 9px;
+        font-weight: 700;
+
+        letter-spacing: 1.8px;
     }
 
     .online-status {
         display: flex;
         align-items: center;
-        gap: 7px;
-        padding: 7px 11px;
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        background: rgba(15, 23, 42, 0.55);
+        gap: 8px;
+
+        padding: 7px 12px;
+
         border-radius: 999px;
-        font-size: 11px;
-        color: #94a3b8;
+
+        background: rgba(22, 11, 24, 0.72);
+
+        border: 1px solid rgba(168, 85, 247, 0.14);
+
+        color: #A8A0AB;
+
+        font-size: 10px;
+        font-weight: 600;
     }
 
     .online-dot {
         width: 7px;
         height: 7px;
+
         border-radius: 50%;
-        background: #22c55e;
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+
+        background: #A855F7;
+
+        box-shadow:
+            0 0 8px rgba(168, 85, 247, 0.9),
+            0 0 18px rgba(168, 85, 247, 0.35);
     }
 
 
-    /* =========================
+    /* ========================================================
        HERO
-    ========================= */
+       ======================================================== */
 
     .hero {
         text-align: center;
-        padding: 48px 20px 30px 20px;
+
+        padding: 62px 20px 34px 20px;
     }
 
     .hero h1 {
         margin: 0;
-        font-size: clamp(34px, 5vw, 56px);
-        line-height: 1.05;
-        font-weight: 750;
-        letter-spacing: -2.5px;
-        color: #f8fafc;
+
+        color: #F5F5F5;
+
+        font-size: clamp(36px, 5.2vw, 58px);
+
+        line-height: 1.02;
+
+        font-weight: 780;
+
+        letter-spacing: -3px;
     }
 
     .hero h1 span {
-        background: linear-gradient(
-            90deg,
-            #818cf8,
-            #c4b5fd,
-            #67e8f9
-        );
+        background:
+            linear-gradient(
+                90deg,
+                #A855F7 0%,
+                #C084FC 45%,
+                #E11D48 100%
+            );
+
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
     .hero p {
-        margin: 16px auto 0 auto;
-        max-width: 620px;
-        color: #64748b;
-        font-size: 15px;
-        line-height: 1.7;
+        max-width: 650px;
+
+        margin: 18px auto 0 auto;
+
+        color: #817A86;
+
+        font-size: 14px;
+
+        line-height: 1.75;
     }
 
 
-    /* =========================
+    /* ========================================================
        QUICK ACTIONS
-    ========================= */
+       ======================================================== */
 
     .quick-title {
-        color: #64748b;
-        font-size: 11px;
+        margin: 8px 0 11px 2px;
+
+        color: #756D78;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
         text-transform: uppercase;
-        letter-spacing: 1.4px;
-        margin: 10px 0 10px 2px;
+
+        letter-spacing: 1.6px;
     }
 
     div.stButton > button {
-        border-radius: 13px;
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        background: rgba(15, 23, 42, 0.65);
-        color: #cbd5e1;
-        min-height: 44px;
-        transition: all 0.2s ease;
-    }
+        min-height: 46px;
 
-    div.stButton > button:hover {
-        border-color: rgba(129, 140, 248, 0.4);
-        background: rgba(30, 41, 59, 0.85);
-        color: white;
-        transform: translateY(-1px);
-    }
+        border-radius: 14px;
 
+        border: 1px solid rgba(168, 85, 247, 0.13);
 
-    /* =========================
-       PANELS
-    ========================= */
-
-    .panel {
-        margin-top: 28px;
-        padding: 22px;
-        border-radius: 20px;
-        border: 1px solid rgba(148, 163, 184, 0.10);
         background:
             linear-gradient(
                 145deg,
-                rgba(15, 23, 42, 0.88),
-                rgba(2, 6, 23, 0.78)
+                rgba(22, 11, 24, 0.92),
+                rgba(11, 7, 13, 0.92)
             );
+
+        color: #C9C2CC;
+
+        font-size: 12px;
+        font-weight: 600;
+
         box-shadow:
-            0 20px 60px rgba(0, 0, 0, 0.18);
+            inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            background 0.18s ease,
+            box-shadow 0.18s ease;
+    }
+
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+
+        border-color: rgba(168, 85, 247, 0.42);
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(42, 17, 45, 0.96),
+                rgba(18, 9, 21, 0.96)
+            );
+
+        color: #FFFFFF;
+
+        box-shadow:
+            0 10px 30px rgba(168, 85, 247, 0.10);
+    }
+
+
+    /* ========================================================
+       PANELS
+       ======================================================== */
+
+    .panel {
+        margin-top: 30px;
+
+        padding: 21px;
+
+        border-radius: 20px;
+
+        border: 1px solid rgba(168, 85, 247, 0.105);
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(22, 11, 24, 0.88),
+                rgba(10, 7, 12, 0.84)
+            );
+
+        box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.018);
+
+        backdrop-filter: blur(18px);
     }
 
     .panel-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
+        justify-content: space-between;
+
+        margin-bottom: 16px;
     }
 
     .panel-title {
+        color: #F5F5F5;
+
         font-size: 16px;
-        font-weight: 700;
-        color: #f8fafc;
+        font-weight: 720;
+
+        letter-spacing: -0.3px;
     }
 
     .panel-subtitle {
-        font-size: 11px;
-        color: #64748b;
-        margin-top: 3px;
+        margin-top: 4px;
+
+        color: #756D78;
+
+        font-size: 10px;
+
+        line-height: 1.5;
     }
 
     .count-badge {
         min-width: 28px;
-        padding: 4px 9px;
+
+        padding: 5px 9px;
+
         text-align: center;
+
         border-radius: 999px;
-        background: rgba(99, 102, 241, 0.12);
-        color: #a5b4fc;
-        font-size: 11px;
-        font-weight: 700;
+
+        background: rgba(168, 85, 247, 0.10);
+
+        border: 1px solid rgba(168, 85, 247, 0.14);
+
+        color: #C084FC;
+
+        font-size: 10px;
+        font-weight: 750;
     }
 
 
-    /* =========================
+    /* ========================================================
        TASK / REMINDER CARDS
-    ========================= */
+       ======================================================== */
 
     .item-card {
         display: flex;
         align-items: center;
+
         gap: 13px;
+
         padding: 13px 14px;
+
         margin-bottom: 9px;
-        border-radius: 13px;
-        border: 1px solid rgba(148, 163, 184, 0.08);
-        background: rgba(15, 23, 42, 0.55);
+
+        border-radius: 14px;
+
+        border: 1px solid rgba(168, 85, 247, 0.075);
+
+        background: rgba(7, 6, 9, 0.60);
+
+        transition:
+            border-color 0.18s ease,
+            background 0.18s ease;
+    }
+
+    .item-card:hover {
+        border-color: rgba(168, 85, 247, 0.18);
+
+        background: rgba(22, 11, 24, 0.72);
     }
 
     .item-icon {
-        width: 30px;
-        height: 30px;
-        flex: 0 0 30px;
+        width: 31px;
+        height: 31px;
+
+        flex: 0 0 31px;
+
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 9px;
-        background: rgba(99, 102, 241, 0.12);
-        font-size: 14px;
+
+        border-radius: 10px;
+
+        background: rgba(168, 85, 247, 0.10);
+
+        border: 1px solid rgba(168, 85, 247, 0.10);
+
+        color: #C084FC;
+
+        font-size: 13px;
     }
 
     .item-content {
@@ -295,32 +446,36 @@ st.html(
     }
 
     .item-name {
-        color: #e2e8f0;
+        color: #EDE9F0;
+
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 620;
+
         word-break: break-word;
     }
 
     .item-meta {
-        margin-top: 3px;
-        color: #64748b;
+        margin-top: 4px;
+
+        color: #706875;
+
         font-size: 10px;
     }
 
     .priority-high {
-        color: #fca5a5;
+        color: #FB7185;
     }
 
     .priority-medium {
-        color: #fcd34d;
+        color: #C084FC;
     }
 
     .priority-low {
-        color: #86efac;
+        color: #A78BFA;
     }
 
     .completed-item {
-        opacity: 0.55;
+        opacity: 0.48;
     }
 
     .completed-item .item-name {
@@ -328,82 +483,136 @@ st.html(
     }
 
 
-    /* =========================
+    /* ========================================================
        CHAT
-    ========================= */
+       ======================================================== */
 
     .chat-heading {
-        margin-top: 38px;
-        margin-bottom: 12px;
-        font-size: 13px;
-        color: #64748b;
+        margin-top: 42px;
+        margin-bottom: 13px;
+
+        color: #756D78;
+
+        font-size: 10px;
+        font-weight: 700;
+
         text-transform: uppercase;
-        letter-spacing: 1.3px;
+        letter-spacing: 1.6px;
     }
 
     [data-testid="stChatMessage"] {
-        background: rgba(15, 23, 42, 0.35);
-        border: 1px solid rgba(148, 163, 184, 0.07);
-        border-radius: 16px;
-        margin-bottom: 9px;
+        margin-bottom: 10px;
+
+        border-radius: 17px;
+
+        border: 1px solid rgba(168, 85, 247, 0.07);
+
+        background: rgba(22, 11, 24, 0.38);
+
+        backdrop-filter: blur(12px);
+    }
+
+    [data-testid="stChatMessage"] p {
+        color: #E8E3E9;
     }
 
     [data-testid="stChatInput"] {
-        margin-top: 15px;
+        margin-top: 17px;
+    }
+
+    [data-testid="stChatInput"] > div {
+        border-radius: 17px;
+
+        border: 1px solid rgba(168, 85, 247, 0.18);
+
+        background: rgba(22, 11, 24, 0.90);
+
+        box-shadow:
+            0 15px 45px rgba(0, 0, 0, 0.28),
+            0 0 25px rgba(168, 85, 247, 0.035);
+
+        backdrop-filter: blur(16px);
     }
 
     [data-testid="stChatInput"] textarea {
-        background: rgba(15, 23, 42, 0.88);
-        border: 1px solid rgba(148, 163, 184, 0.15);
-        border-radius: 15px;
-        color: #f8fafc;
+        color: #F5F5F5 !important;
+
+        background: transparent !important;
+
+        border: none !important;
+
+        font-size: 13px;
+    }
+
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #6F6873 !important;
     }
 
 
-    /* =========================
+    /* ========================================================
+       EXPANDER
+       ======================================================== */
+
+    [data-testid="stExpander"] {
+        border: 1px solid rgba(168, 85, 247, 0.08);
+
+        border-radius: 13px;
+
+        background: rgba(7, 6, 9, 0.42);
+    }
+
+
+    /* ========================================================
        ACTIVITY
-    ========================= */
+       ======================================================== */
 
     .activity {
-        margin-top: 15px;
-        padding: 13px 15px;
-        border-radius: 13px;
-        border: 1px solid rgba(99, 102, 241, 0.13);
-        background: rgba(30, 41, 59, 0.45);
+        margin-top: 16px;
+
+        padding: 14px 15px;
+
+        border-radius: 14px;
+
+        border: 1px solid rgba(168, 85, 247, 0.12);
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(127, 29, 90, 0.12),
+                rgba(22, 11, 24, 0.58)
+            );
     }
 
     .activity-title {
-        color: #a5b4fc;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.8px;
+        color: #C084FC;
+
+        font-size: 10px;
+
+        font-weight: 750;
+
+        letter-spacing: 1px;
+
         text-transform: uppercase;
     }
 
     .activity-text {
-        color: #94a3b8;
-        font-size: 12px;
-        margin-top: 5px;
+        margin-top: 6px;
+
+        color: #928A96;
+
+        font-size: 11px;
+
         line-height: 1.7;
     }
 
-
-    /* =========================
-       FOOTER
-    ========================= */
-
-    .footer {
-        text-align: center;
-        margin-top: 45px;
-        color: #334155;
-        font-size: 10px;
-        letter-spacing: 0.8px;
+    .activity-text strong {
+        color: #E9D5FF;
     }
 
 
-    /* =========================
+    /* ========================================================
        MOBILE
-    ========================= */
+       ======================================================== */
 
     @media (max-width: 700px) {
 
@@ -412,19 +621,36 @@ st.html(
             padding-right: 12px;
         }
 
+        .topbar {
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+
+        .brand-title {
+            font-size: 16px;
+        }
+
+        .online-status {
+            padding: 6px 9px;
+        }
+
         .hero {
-            padding-top: 30px;
+            padding-top: 38px;
         }
 
         .hero h1 {
-            font-size: 36px;
+            font-size: 37px;
+            letter-spacing: -2px;
+        }
+
+        .hero p {
+            font-size: 13px;
         }
 
         .panel {
             padding: 15px;
-            border-radius: 16px;
+            border-radius: 17px;
         }
-
     }
 
     </style>
@@ -442,11 +668,18 @@ st.html(
 
         <div class="brand">
 
-            <div class="brand-icon">✦</div>
+            <div class="brand-icon">
+                ✦
+            </div>
 
             <div>
-                <div class="brand-title">Swas Agent</div>
-                <div class="brand-subtitle">PERSONAL AI</div>
+                <div class="brand-title">
+                    Swas Agent
+                </div>
+
+                <div class="brand-subtitle">
+                    PERSONAL AI
+                </div>
             </div>
 
         </div>
@@ -474,8 +707,8 @@ st.html(
         </h1>
 
         <p>
-            Your personal AI assistant for questions, calculations,
-            tasks, reminders and scheduling.
+            Your personal AI assistant for questions,
+            calculations, tasks, reminders and scheduling.
         </p>
 
     </div>
@@ -493,28 +726,34 @@ st.html(
 
 quick_col1, quick_col2, quick_col3 = st.columns(3)
 
+
 with quick_col1:
+
     if st.button(
         "💬  Ask anything",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.session_state.quick_prompt = (
             "What can you help me with?"
         )
 
+
 with quick_col2:
+
     if st.button(
         "📅  Schedule something",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.session_state.quick_prompt = (
             "Help me schedule something on my Google Calendar."
         )
 
+
 with quick_col3:
+
     if st.button(
         "🧮  Calculate",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.session_state.quick_prompt = (
             "Calculate 4589 * 27 + 156"
@@ -522,7 +761,7 @@ with quick_col3:
 
 
 # ============================================================
-# TASKS PANEL
+# TASKS
 # ============================================================
 
 pending_tasks = list_tasks()
@@ -547,6 +786,7 @@ if pending_tasks or completed_tasks:
             <div class="panel-header">
 
                 <div>
+
                     <div class="panel-title">
                         My Tasks
                     </div>
@@ -554,6 +794,7 @@ if pending_tasks or completed_tasks:
                     <div class="panel-subtitle">
                         Things you want Swas Agent to keep track of
                     </div>
+
                 </div>
 
                 <div class="count-badge">
@@ -564,23 +805,38 @@ if pending_tasks or completed_tasks:
         """
     )
 
-    # Pending tasks
+
+    # --------------------------------------------------------
+    # PENDING TASKS
+    # --------------------------------------------------------
 
     for task in pending_tasks:
 
         title = html.escape(
-            str(task.get("title", "Untitled task"))
+            str(
+                task.get(
+                    "title",
+                    "Untitled task"
+                )
+            )
         )
 
         task_id = task.get("id")
 
         due_date = html.escape(
-            str(task.get("due_date") or "No due date")
+            str(
+                task.get("due_date")
+                or "No due date"
+            )
         )
 
         priority = str(
-            task.get("priority", "medium")
+            task.get(
+                "priority",
+                "medium"
+            )
         ).lower()
+
 
         st.html(
             f"""
@@ -611,7 +867,9 @@ if pending_tasks or completed_tasks:
             """
         )
 
-        task_col1, task_col2 = st.columns([1, 1])
+
+        task_col1, task_col2 = st.columns(2)
+
 
         with task_col1:
 
@@ -624,6 +882,7 @@ if pending_tasks or completed_tasks:
                 complete_task(task_id)
 
                 st.rerun()
+
 
         with task_col2:
 
@@ -638,7 +897,9 @@ if pending_tasks or completed_tasks:
                 st.rerun()
 
 
-    # Completed tasks
+    # --------------------------------------------------------
+    # COMPLETED TASKS
+    # --------------------------------------------------------
 
     if completed_tasks:
 
@@ -659,13 +920,13 @@ if pending_tasks or completed_tasks:
 
                 due_date = html.escape(
                     str(
-                        task.get(
-                            "due_date"
-                        ) or "No due date"
+                        task.get("due_date")
+                        or "No due date"
                     )
                 )
 
                 task_id = task.get("id")
+
 
                 st.html(
                     f"""
@@ -691,6 +952,7 @@ if pending_tasks or completed_tasks:
                     """
                 )
 
+
                 if st.button(
                     "Delete",
                     key=f"delete_completed_task_{task_id}",
@@ -701,11 +963,12 @@ if pending_tasks or completed_tasks:
 
                     st.rerun()
 
+
     st.html("</div>")
 
 
 # ============================================================
-# REMINDERS PANEL
+# REMINDERS
 # ============================================================
 
 pending_reminders = list_reminders()
@@ -750,7 +1013,9 @@ if pending_reminders or completed_reminders:
     )
 
 
-    # Pending reminders
+    # --------------------------------------------------------
+    # PENDING REMINDERS
+    # --------------------------------------------------------
 
     for reminder in pending_reminders:
 
@@ -773,6 +1038,7 @@ if pending_reminders or completed_reminders:
                 )
             )
         )
+
 
         st.html(
             f"""
@@ -798,7 +1064,9 @@ if pending_reminders or completed_reminders:
             """
         )
 
-        reminder_col1, reminder_col2 = st.columns([1, 1])
+
+        reminder_col1, reminder_col2 = st.columns(2)
+
 
         with reminder_col1:
 
@@ -811,6 +1079,7 @@ if pending_reminders or completed_reminders:
                 complete_reminder(reminder_id)
 
                 st.rerun()
+
 
         with reminder_col2:
 
@@ -825,7 +1094,9 @@ if pending_reminders or completed_reminders:
                 st.rerun()
 
 
-    # Completed reminders
+    # --------------------------------------------------------
+    # COMPLETED REMINDERS
+    # --------------------------------------------------------
 
     if completed_reminders:
 
@@ -855,6 +1126,7 @@ if pending_reminders or completed_reminders:
                     )
                 )
 
+
                 st.html(
                     f"""
                     <div class="item-card completed-item">
@@ -879,6 +1151,7 @@ if pending_reminders or completed_reminders:
                     """
                 )
 
+
                 if st.button(
                     "Delete",
                     key=f"delete_completed_reminder_{reminder_id}",
@@ -889,6 +1162,7 @@ if pending_reminders or completed_reminders:
 
                     st.rerun()
 
+
     st.html("</div>")
 
 
@@ -897,6 +1171,7 @@ if pending_reminders or completed_reminders:
 # ============================================================
 
 if "messages" not in st.session_state:
+
     st.session_state.messages = []
 
 
@@ -917,6 +1192,7 @@ for message in st.session_state.messages:
         if role == "assistant"
         else "👤"
     )
+
 
     with st.chat_message(
         role,
@@ -1086,7 +1362,7 @@ if prompt:
                 else:
 
                     response = (
-                        f"❌ Something went wrong:\n\n"
+                        "❌ Something went wrong:\n\n"
                         f"{error_text}"
                     )
 
@@ -1114,15 +1390,15 @@ if prompt:
                 )
 
 
-                result_text = (
-                    item.get("result")
+                result_text = item.get(
+                    "result"
                 )
 
 
                 if result_text is None:
 
-                    result_text = (
-                        item.get("output")
+                    result_text = item.get(
+                        "output"
                     )
 
 
@@ -1137,11 +1413,8 @@ if prompt:
 
 
                 if (
-                    "error"
-                    in result_text.lower()
-                    or
-                    "failed"
-                    in result_text.lower()
+                    "error" in result_text.lower()
+                    or "failed" in result_text.lower()
                 ):
 
                     failed.append(
@@ -1256,15 +1529,11 @@ if prompt:
             ),
 
             "delete_reminder": (
-                "🗑 Reminder Manager",
+                "🗑 Task Manager",
                 "Swas deleted a reminder."
             ),
         }
 
-
-        # ----------------------------------------------------
-        # SUPPORT MULTIPLE TOOLS
-        # ----------------------------------------------------
 
         activity_names = tools_used or (
             [tool_used]
@@ -1320,9 +1589,7 @@ if prompt:
                     </div>
 
                     <div class="activity-text">
-
                         {"<br><br>".join(activity_lines)}
-
                     </div>
 
                 </div>
